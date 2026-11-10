@@ -125,24 +125,23 @@
     <!-- SAĞ ANA İÇERİK ALANI -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden pb-16 md:pb-0">
         
-        <!-- ÜST BAŞLIK BARI (SADE VE FERAH) -->
-        <header class="h-14 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700/80 px-4 md:px-8 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-2.5">
-                <div class="md:hidden w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-emerald-600/30">
-                    <i class="fa-solid fa-coins text-xs"></i>
+        <!-- ÜST BAŞLIK BARI -->
+        <header class="h-14 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700/80 px-3.5 sm:px-4 md:px-8 flex items-center justify-between shrink-0 select-none">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="md:hidden w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-emerald-600/30 shrink-0">
+                    <i class="fa-solid fa-coins"></i>
                 </div>
-                <h2 id="page-title" class="text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight">Genel Bakış & Özet</h2>
+                <h2 id="page-title" class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight truncate">Genel Bakış & Özet</h2>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 shrink-0">
                 <span id="header-user-badge" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300">
                     <i class="fa-solid fa-circle-user text-emerald-600"></i>
                     <span id="header-username">admin</span>
                 </span>
-                <button onclick="openChangePasswordModal()" class="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white" title="Hesap / Şifre">
-                    <i class="fa-solid fa-key text-xs"></i>
-                </button>
-                <button onclick="logoutUser()" class="md:hidden p-2 rounded-lg text-rose-500 hover:text-rose-700" title="Çıkış Yap">
-                    <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                <!-- Hızlı İşlem Kısayolu -->
+                <button onclick="openModal('modal-quick-actions')" class="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 active:scale-95 transition">
+                    <i class="fa-solid fa-plus text-[11px]"></i>
+                    <span class="text-xs">İşlem</span>
                 </button>
             </div>
         </header>
@@ -153,31 +152,32 @@
         </div>
     </main>
 
-    <!-- MOBİL ALT GEZİNME BARI (BOTTOM NAVIGATION) -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700/80 px-2 flex justify-around items-center h-16 shadow-lg select-none pb-[max(6px,env(safe-area-inset-bottom,0px))]">
-        <button onclick="navigate('dashboard')" id="nav-dashboard-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
-            <i class="fa-solid fa-chart-pie text-lg mb-0.5"></i>
-            <span class="text-[10px] font-medium">Özet</span>
-        </button>
-        <button onclick="navigate('debtors', 'ALL')" id="nav-debtors-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
-            <i class="fa-solid fa-users text-lg mb-0.5"></i>
-            <span class="text-[10px] font-medium">Borçlular</span>
-        </button>
-        <!-- Center Elevated Quick Action FAB -->
-        <button onclick="openModal('modal-quick-actions')" class="flex flex-col items-center justify-center flex-1 -mt-6 group">
-            <div class="w-12 h-12 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 border-4 border-slate-50 dark:border-slate-900 transition-transform active:scale-95 group-hover:scale-105">
-                <i class="fa-solid fa-plus text-lg"></i>
-            </div>
-            <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Hızlı</span>
-        </button>
-        <button onclick="navigate('contracts', 'ALL')" id="nav-contracts-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
-            <i class="fa-solid fa-handshake text-lg mb-0.5"></i>
-            <span class="text-[10px] font-medium">Bağlantılar</span>
-        </button>
-        <button onclick="openModal('modal-mobile-menu')" id="nav-menu-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
-            <i class="fa-solid fa-bars text-lg mb-0.5"></i>
-            <span class="text-[10px] font-medium">Menü</span>
-        </button>
+    <!-- MOBİL ALT GEZİNME BARI (KUSURSUZ HİZA) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700/80 shadow-lg select-none pb-[max(6px,env(safe-area-inset-bottom,0px))]">
+        <div class="grid grid-cols-5 h-16 w-full items-center px-1">
+            <button onclick="navigate('dashboard')" id="nav-dashboard-mobile" class="mobile-nav-btn flex flex-col items-center justify-center h-full py-1 text-slate-500 dark:text-slate-400 transition">
+                <i class="fa-solid fa-chart-pie text-lg mb-1"></i>
+                <span class="text-[10px] font-medium leading-none">Özet</span>
+            </button>
+            <button onclick="navigate('debtors', 'ALL')" id="nav-debtors-mobile" class="mobile-nav-btn flex flex-col items-center justify-center h-full py-1 text-slate-500 dark:text-slate-400 transition">
+                <i class="fa-solid fa-users text-lg mb-1"></i>
+                <span class="text-[10px] font-medium leading-none">Borçlular</span>
+            </button>
+            <button onclick="openModal('modal-quick-actions')" class="flex flex-col items-center justify-center h-full py-1 group transition">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-600 group-hover:bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-600/30 transition-transform active:scale-90">
+                    <i class="fa-solid fa-plus text-base"></i>
+                </div>
+                <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 leading-none">İşlem</span>
+            </button>
+            <button onclick="navigate('contracts', 'ALL')" id="nav-contracts-mobile" class="mobile-nav-btn flex flex-col items-center justify-center h-full py-1 text-slate-500 dark:text-slate-400 transition">
+                <i class="fa-solid fa-handshake text-lg mb-1"></i>
+                <span class="text-[10px] font-medium leading-none">Bağlantılar</span>
+            </button>
+            <button onclick="openModal('modal-mobile-menu')" id="nav-menu-mobile" class="mobile-nav-btn flex flex-col items-center justify-center h-full py-1 text-slate-500 dark:text-slate-400 transition">
+                <i class="fa-solid fa-bars text-lg mb-1"></i>
+                <span class="text-[10px] font-medium leading-none">Menü</span>
+            </button>
+        </div>
     </nav>
 
     <!-- MODAL: MOBİL HIZLI İŞLEM PANELİ (ACTION SHEET) -->
@@ -1451,53 +1451,65 @@
                     </div>
                 </div>
 
-                <!-- 3. HIZLI İŞLEMLER (Dört Belirgin İşlem Butonu) -->
+                <!-- 3. HIZLI İŞLEMLER (DÖRT KUSURSUZ HİZADA BUTON) -->
                 <div>
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-bolt text-amber-500"></i> Hızlı İşlemler
+                        <i class="fa-solid fa-bolt text-amber-500"></i> Hızlı Finans İşlemleri
                     </h3>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-                        <!-- Yeni Kişi / Firma -->
-                        <button onclick="openNewPersonModal()" class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-slate-400 dark:hover:border-slate-500 shadow-sm hover:shadow transition text-left flex items-center gap-3.5 group">
-                            <div class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-700/70 text-slate-700 dark:text-slate-200 flex items-center justify-center text-lg group-hover:scale-105 transition">
-                                <i class="fa-solid fa-user-plus"></i>
-                            </div>
-                            <div>
-                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-emerald-600 transition">Yeni Kişi / Firma</div>
-                                <div class="text-[11px] text-slate-400">Yeni cari kart aç</div>
-                            </div>
-                        </button>
-
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <!-- Borç Ver -->
-                        <button onclick="openGiveDebtModal()" class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-amber-400 dark:hover:border-amber-500 shadow-sm hover:shadow transition text-left flex items-center gap-3.5 group">
-                            <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg group-hover:scale-105 transition">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <button onclick="openGiveDebtModal()" class="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-amber-400 dark:hover:border-amber-500 shadow-sm transition text-left flex flex-col justify-between h-28 group">
+                            <div class="flex items-center justify-between w-full">
+                                <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base group-hover:scale-105 transition shadow-sm">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </div>
+                                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full">Çıkış</span>
                             </div>
                             <div>
-                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-amber-600 transition">Borç Ver</div>
-                                <div class="text-[11px] text-slate-400">Yeni borç kaydı gir</div>
+                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-amber-600 transition truncate">Borç Ver</div>
+                                <div class="text-[10px] text-slate-400 truncate mt-0.5">Yeni borç kaydı gir</div>
                             </div>
                         </button>
 
                         <!-- Ödeme Al -->
-                        <button onclick="openReceivePaymentModal()" class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm hover:shadow transition text-left flex items-center gap-3.5 group">
-                            <div class="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg group-hover:scale-105 transition">
-                                <i class="fa-solid fa-circle-arrow-down"></i>
+                        <button onclick="openReceivePaymentModal()" class="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm transition text-left flex flex-col justify-between h-28 group">
+                            <div class="flex items-center justify-between w-full">
+                                <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base group-hover:scale-105 transition shadow-sm">
+                                    <i class="fa-solid fa-circle-arrow-down"></i>
+                                </div>
+                                <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-full">Giriş</span>
                             </div>
                             <div>
-                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-blue-600 transition">Ödeme Al</div>
-                                <div class="text-[11px] text-slate-400">Tahsilat / kısmi ödeme</div>
+                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-blue-600 transition truncate">Tahsilat Al</div>
+                                <div class="text-[10px] text-slate-400 truncate mt-0.5">Alacak tahsilatı kaydet</div>
                             </div>
                         </button>
 
-                        <!-- Bağlantı Oluştur -->
-                        <button onclick="openCreateContractModal()" class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-purple-400 dark:hover:border-purple-500 shadow-sm hover:shadow transition text-left flex items-center gap-3.5 group">
-                            <div class="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-lg group-hover:scale-105 transition">
-                                <i class="fa-solid fa-handshake"></i>
+                        <!-- Yeni Kişi / Firma -->
+                        <button onclick="openNewPersonModal()" class="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-emerald-400 dark:hover:border-emerald-500 shadow-sm transition text-left flex flex-col justify-between h-28 group">
+                            <div class="flex items-center justify-between w-full">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base group-hover:scale-105 transition shadow-sm">
+                                    <i class="fa-solid fa-user-plus"></i>
+                                </div>
+                                <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">Cari</span>
                             </div>
                             <div>
-                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-purple-600 transition">Bağlantı Oluştur</div>
-                                <div class="text-[11px] text-slate-400">Döviz satış sözleşmesi</div>
+                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-emerald-600 transition truncate">Yeni Kişi / Firma</div>
+                                <div class="text-[10px] text-slate-400 truncate mt-0.5">Yeni cari kart aç</div>
+                            </div>
+                        </button>
+
+                        <!-- Döviz Bağlantısı -->
+                        <button onclick="openCreateContractModal()" class="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-purple-400 dark:hover:border-purple-500 shadow-sm transition text-left flex flex-col justify-between h-28 group">
+                            <div class="flex items-center justify-between w-full">
+                                <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-base group-hover:scale-105 transition shadow-sm">
+                                    <i class="fa-solid fa-handshake"></i>
+                                </div>
+                                <span class="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 px-2 py-0.5 rounded-full">Fikse</span>
+                            </div>
+                            <div>
+                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-purple-600 transition truncate">Döviz Bağlantısı</div>
+                                <div class="text-[10px] text-slate-400 truncate mt-0.5">Kur sabitleme sözleşmesi</div>
                             </div>
                         </button>
                     </div>
@@ -1708,28 +1720,27 @@
 
             document.getElementById('content-container').innerHTML = `
                 <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 sm:p-6 space-y-5">
-                    <!-- ÜST FİLTRE VE ARAMA -->
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                            <button onclick="renderDebtorsList('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ALL' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
+                    <!-- ÜST FİLTRE VE ARAMA (KUSURSUZ HİZA) -->
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-3 p-1 rounded-xl bg-slate-100 dark:bg-slate-700/60 text-center select-none">
+                            <button onclick="renderDebtorsList('ALL')" class="py-2 rounded-lg text-xs font-bold transition ${statusFilter === 'ALL' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}">
                                 Tümü
                             </button>
-                            <button onclick="renderDebtorsList('ACTIVE')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ACTIVE' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
+                            <button onclick="renderDebtorsList('ACTIVE')" class="py-2 rounded-lg text-xs font-bold transition ${statusFilter === 'ACTIVE' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}">
                                 Aktif Borçlar
                             </button>
-                            <button onclick="renderDebtorsList('CLOSED')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'CLOSED' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
-                                Kapananlar (Arşiv)
+                            <button onclick="renderDebtorsList('CLOSED')" class="py-2 rounded-lg text-xs font-bold transition ${statusFilter === 'CLOSED' ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}">
+                                Kapananlar
                             </button>
                         </div>
-                        <div class="flex items-center gap-2.5 flex-1 max-w-md justify-end">
+                        <div class="flex items-center gap-2">
                             <div class="relative flex-1">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                                <input type="text" oninput="renderDebtorsList('${statusFilter}', this.value)" value="${search}" placeholder="Kişi veya firma adıyla ara..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-xs focus:outline-emerald-500">
+                                <input type="text" oninput="renderDebtorsList('${statusFilter}', this.value)" value="${search}" placeholder="Kişi veya firma adıyla ara..." class="w-full h-10 pl-9 pr-3 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-xs focus:outline-emerald-500">
                             </div>
-                            <button onclick="openNewPersonModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 shrink-0 shadow-sm transition">
+                            <button onclick="openNewPersonModal()" class="h-10 px-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shrink-0 shadow-sm transition">
                                 <i class="fa-solid fa-user-plus text-xs"></i>
-                                <span class="hidden sm:inline">Yeni Kişi / Firma</span>
-                                <span class="sm:hidden">Yeni Kişi</span>
+                                <span>Yeni Kişi</span>
                             </button>
                         </div>
                     </div>
@@ -2006,28 +2017,30 @@
 
             document.getElementById('content-container').innerHTML = `
                 <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 sm:p-6 space-y-5">
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                            <button onclick="renderContractsList('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ALL' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
+                    <!-- ÜST FİLTRE VE ARAMA (KUSURSUZ HİZA) -->
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-4 p-1 rounded-xl bg-slate-100 dark:bg-slate-700/60 text-center select-none text-[11px]">
+                            <button onclick="renderContractsList('ALL')" class="py-2 rounded-lg font-bold transition ${statusFilter === 'ALL' ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}">
                                 Tümü
                             </button>
-                            <button onclick="renderContractsList('PENDING')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'PENDING' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
-                                Bekleyenler
+                            <button onclick="renderContractsList('PENDING')" class="py-2 rounded-lg font-bold transition ${statusFilter === 'PENDING' ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}">
+                                Bekleyen
                             </button>
-                            <button onclick="renderContractsList('PARTIAL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'PARTIAL' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
-                                Kısmi Ödenenler
+                            <button onclick="renderContractsList('PARTIAL')" class="py-2 rounded-lg font-bold transition ${statusFilter === 'PARTIAL' ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}">
+                                Kısmi
                             </button>
-                            <button onclick="renderContractsList('COMPLETED')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'COMPLETED' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
-                                Tamamlananlar
+                            <button onclick="renderContractsList('COMPLETED')" class="py-2 rounded-lg font-bold transition ${statusFilter === 'COMPLETED' ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}">
+                                Biten
                             </button>
                         </div>
-                        <div class="flex items-center gap-2.5 flex-1 max-w-md justify-end">
+                        <div class="flex items-center gap-2">
                             <div class="relative flex-1">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                                <input type="text" oninput="renderContractsList('${statusFilter}', this.value)" value="${search}" placeholder="Kişi, sözleşme no veya açıklama ara..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-xs focus:outline-purple-500">
+                                <input type="text" oninput="renderContractsList('${statusFilter}', this.value)" value="${search}" placeholder="Kişi, sözleşme no ara..." class="w-full h-10 pl-9 pr-3 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-xs focus:outline-purple-500">
                             </div>
-                            <button onclick="openCreateContractModal()" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 shrink-0 transition">
-                                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Yeni Bağlantı</span><span class="sm:hidden">Yeni</span>
+                            <button onclick="openCreateContractModal()" class="h-10 px-3.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 shrink-0 shadow-sm transition">
+                                <i class="fa-solid fa-plus text-xs"></i>
+                                <span>Yeni Bağlantı</span>
                             </button>
                         </div>
                     </div>
