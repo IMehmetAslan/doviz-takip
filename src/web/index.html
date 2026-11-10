@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Döviz Borç ve Alacak Takip Sistemi</title>
     <!-- PWA & Mobil Meta Etiketleri -->
     <link rel="manifest" href="/manifest.json">
@@ -51,6 +51,9 @@
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex transition-colors duration-200">
+
+    <!-- TOAST BİLDİRİM KONTEYNERİ -->
+    <div id="toast-container" class="fixed top-4 right-4 left-4 sm:left-auto sm:w-96 z-[110] flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- SOL MENÜ (SADE & ZARİF NAVİGASYON - MASAÜSTÜNDE GÖRÜNÜR) -->
     <aside class="w-56 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700/80 hidden md:flex flex-col justify-between shrink-0 select-none">
@@ -145,13 +148,13 @@
         </header>
 
         <!-- DİNAMİK İÇERİK KONTEYNERİ -->
-        <div id="content-container" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+        <div id="content-container" class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-8 pb-28 md:pb-8 space-y-6">
             <!-- JavaScript dinamik render edecek -->
         </div>
     </main>
 
     <!-- MOBİL ALT GEZİNME BARI (BOTTOM NAVIGATION) -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700/80 px-2 flex justify-around items-center h-16 shadow-lg select-none">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700/80 px-2 flex justify-around items-center h-16 shadow-lg select-none pb-[max(6px,env(safe-area-inset-bottom,0px))]">
         <button onclick="navigate('dashboard')" id="nav-dashboard-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
             <i class="fa-solid fa-chart-pie text-lg mb-0.5"></i>
             <span class="text-[10px] font-medium">Özet</span>
@@ -160,22 +163,135 @@
             <i class="fa-solid fa-users text-lg mb-0.5"></i>
             <span class="text-[10px] font-medium">Borçlular</span>
         </button>
+        <!-- Center Elevated Quick Action FAB -->
+        <button onclick="openModal('modal-quick-actions')" class="flex flex-col items-center justify-center flex-1 -mt-6 group">
+            <div class="w-12 h-12 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 border-4 border-slate-50 dark:border-slate-900 transition-transform active:scale-95 group-hover:scale-105">
+                <i class="fa-solid fa-plus text-lg"></i>
+            </div>
+            <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Hızlı</span>
+        </button>
         <button onclick="navigate('contracts', 'ALL')" id="nav-contracts-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
             <i class="fa-solid fa-handshake text-lg mb-0.5"></i>
             <span class="text-[10px] font-medium">Bağlantılar</span>
         </button>
-        <button onclick="navigate('backup-security')" id="nav-backup-security-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
-            <i class="fa-solid fa-shield-halved text-lg mb-0.5"></i>
-            <span class="text-[10px] font-medium">Yedek</span>
-        </button>
-        <button onclick="toggleDarkMode()" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
-            <i class="fa-solid fa-circle-half-stroke text-lg mb-0.5"></i>
-            <span class="text-[10px] font-medium">Tema</span>
+        <button onclick="openModal('modal-mobile-menu')" id="nav-menu-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
+            <i class="fa-solid fa-bars text-lg mb-0.5"></i>
+            <span class="text-[10px] font-medium">Menü</span>
         </button>
     </nav>
 
+    <!-- MODAL: MOBİL HIZLI İŞLEM PANELİ (ACTION SHEET) -->
+    <div id="modal-quick-actions" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target === this) closeModal('modal-quick-actions')">
+        <div class="bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-sm shadow-2xl border-t sm:border border-slate-200 dark:border-slate-700 p-5 space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700/60">
+                <span class="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-emerald-600"></i> Hızlı Finans İşlemleri
+                </span>
+                <button onclick="closeModal('modal-quick-actions')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 gap-2.5">
+                <button onclick="closeModal('modal-quick-actions'); openGiveDebtModal();" class="w-full p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-900 dark:text-amber-200 flex items-center gap-3.5 transition font-semibold text-xs text-left">
+                    <div class="w-9 h-9 rounded-lg bg-amber-500 text-white flex items-center justify-center text-sm shadow-sm shrink-0">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold">Borç Ver (Para Çıkışı)</div>
+                        <div class="text-[10px] text-amber-700 dark:text-amber-300 font-normal">Kişiye veya firmaya borç kaydı gir</div>
+                    </div>
+                </button>
+                <button onclick="closeModal('modal-quick-actions'); openReceivePaymentModal();" class="w-full p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-900 dark:text-blue-200 flex items-center gap-3.5 transition font-semibold text-xs text-left">
+                    <div class="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm shadow-sm shrink-0">
+                        <i class="fa-solid fa-circle-arrow-down"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold">Ödeme / Tahsilat Al (Para Girişi)</div>
+                        <div class="text-[10px] text-blue-700 dark:text-blue-300 font-normal">Alacak tahsilatı ve kısmi ödeme kaydet</div>
+                    </div>
+                </button>
+                <button onclick="closeModal('modal-quick-actions'); openNewPersonModal();" class="w-full p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-emerald-900 dark:text-emerald-200 flex items-center gap-3.5 transition font-semibold text-xs text-left">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm shadow-sm shrink-0">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold">Yeni Kişi / Firma Ekle</div>
+                        <div class="text-[10px] text-emerald-700 dark:text-emerald-300 font-normal">Sisteme yeni bir cari hesap tanımla</div>
+                    </div>
+                </button>
+                <button onclick="closeModal('modal-quick-actions'); openCreateContractModal();" class="w-full p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 text-purple-900 dark:text-purple-200 flex items-center gap-3.5 transition font-semibold text-xs text-left">
+                    <div class="w-9 h-9 rounded-lg bg-purple-600 text-white flex items-center justify-center text-sm shadow-sm shrink-0">
+                        <i class="fa-solid fa-handshake"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold">Yeni Döviz Bağlantısı (Fikse)</div>
+                        <div class="text-[10px] text-purple-700 dark:text-purple-300 font-normal">Kur sabitlemeli forward döviz sözleşmesi</div>
+                    </div>
+                </button>
+            </div>
+            <button onclick="closeModal('modal-quick-actions')" class="w-full py-2.5 text-center text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/60 rounded-xl transition">
+                Vazgeç
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: MOBİL MENÜ (DİĞER İŞLEMLER) -->
+    <div id="modal-mobile-menu" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target === this) closeModal('modal-mobile-menu')">
+        <div class="bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-sm shadow-2xl border-t sm:border border-slate-200 dark:border-slate-700 p-5 space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700/60">
+                <span class="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-emerald-600"></i> Sistem Menüsü
+                </span>
+                <button onclick="closeModal('modal-mobile-menu')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-1.5 text-xs font-semibold">
+                <button onclick="closeModal('modal-mobile-menu'); navigate('backup-security');" class="w-full p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition text-left">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div>Yedekleme & Veri Güvenliği</div>
+                        <div class="text-[10px] text-slate-400 font-normal">Bulut yedek durumunu incele ve yönet</div>
+                    </div>
+                </button>
+                <button onclick="toggleDarkMode();" class="w-full p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition text-left">
+                    <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-circle-half-stroke"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div>Görünüm Teması Değiştir</div>
+                        <div class="text-[10px] text-slate-400 font-normal">Karanlık (Dark) ve Aydınlık (Light) Mod</div>
+                    </div>
+                </button>
+                <button onclick="closeModal('modal-mobile-menu'); openChangePasswordModal();" class="w-full p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition text-left">
+                    <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div>Giriş Şifresini Değiştir</div>
+                        <div class="text-[10px] text-slate-400 font-normal">Yönetici şifrenizi güncelleyin</div>
+                    </div>
+                </button>
+                <button onclick="logoutUser();" class="w-full p-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-3 text-rose-600 dark:text-rose-400 transition text-left">
+                    <div class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div>Güvenli Çıkış Yap</div>
+                        <div class="text-[10px] text-rose-400 font-normal">Oturumu sonlandır</div>
+                    </div>
+                </button>
+            </div>
+            <button onclick="closeModal('modal-mobile-menu')" class="w-full py-2.5 text-center text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/60 rounded-xl transition">
+                Kapat
+            </button>
+        </div>
+    </div>
+
     <!-- MODAL: YENİ KİŞİ / FİRMA EKLE -->
-    <div id="modal-person" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div id="modal-person" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target === this) closeModal('modal-person')">
         <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                 <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
@@ -190,7 +306,7 @@
                 </div>
                 <div>
                     <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Telefon Numarası (İsteğe bağlı)</label>
-                    <input type="text" id="person-phone" placeholder="0532 123 45 67" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    <input type="tel" inputmode="tel" id="person-phone" placeholder="0532 123 45 67" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
                 </div>
                 <div>
                     <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Açıklama / Not</label>
@@ -205,7 +321,7 @@
     </div>
 
     <!-- MODAL: BORÇ VERME İŞLEMİ -->
-    <div id="modal-give-debt" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div id="modal-give-debt" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target === this) closeModal('modal-give-debt')">
         <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 bg-emerald-50 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-800/40 flex justify-between items-center">
                 <h3 class="font-bold text-sm text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
@@ -223,7 +339,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Verilen Tutar *</label>
-                        <input type="number" step="0.01" id="debt-amount" required placeholder="Örn: 10000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-emerald-600">
+                        <input type="number" step="0.01" inputmode="decimal" id="debt-amount" required placeholder="Örn: 10000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-emerald-600">
                     </div>
                     <div>
                         <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Para Birimi *</label>
@@ -245,7 +361,7 @@
                     </div>
                     <div>
                         <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Döviz Kuru (İsteğe bağlı)</label>
-                        <input type="number" step="0.0001" id="debt-rate" placeholder="Örn: 34.50" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                        <input type="number" step="0.0001" inputmode="decimal" id="debt-rate" placeholder="Örn: 34.50" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
                     </div>
                 </div>
                 <div>
@@ -261,7 +377,7 @@
     </div>
 
     <!-- MODAL: ÖDEME ALMA İŞLEMİ -->
-    <div id="modal-receive-payment" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div id="modal-receive-payment" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target === this) closeModal('modal-receive-payment')">
         <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 bg-blue-50 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-800/40 flex justify-between items-center">
                 <h3 class="font-bold text-sm text-blue-900 dark:text-blue-300 flex items-center gap-2">
@@ -279,7 +395,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Ödenen Tutar *</label>
-                        <input type="number" step="0.01" id="pay-amount" required placeholder="Örn: 2000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-blue-600">
+                        <input type="number" step="0.01" inputmode="decimal" id="pay-amount" required placeholder="Örn: 2000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-blue-600">
                     </div>
                     <div>
                         <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Para Birimi *</label>
@@ -301,7 +417,7 @@
                     </div>
                     <div>
                         <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Döviz Kuru (İsteğe bağlı)</label>
-                        <input type="number" step="0.0001" id="pay-rate" placeholder="Örn: 34.50" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                        <input type="number" step="0.0001" inputmode="decimal" id="pay-rate" placeholder="Örn: 34.50" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
                     </div>
                 </div>
                 <div>
@@ -317,7 +433,7 @@
     </div>
 
     <!-- MODAL: YENİ BAĞLANTI OLUŞTUR -->
-    <div id="modal-create-contract" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div id="modal-create-contract" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target === this) closeModal('modal-create-contract')">
         <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 bg-purple-50 dark:bg-purple-950/30 border-b border-purple-100 dark:border-purple-800/40 flex justify-between items-center">
                 <h3 class="font-bold text-sm text-purple-900 dark:text-purple-300 flex items-center gap-2">
@@ -338,7 +454,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Satılacak Miktar *</label>
-                            <input type="number" step="0.01" id="contract-sell-amount" oninput="calculateContractValues('amount')" required placeholder="Örn: 1000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-purple-600">
+                            <input type="number" step="0.01" inputmode="decimal" id="contract-sell-amount" oninput="calculateContractValues('amount')" required placeholder="Örn: 1000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-purple-600">
                         </div>
                         <div>
                             <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Satılacak Para Birimi *</label>
@@ -358,11 +474,11 @@
                     <div class="grid grid-cols-3 gap-3">
                         <div class="col-span-1">
                             <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Birim Fiyat / Kur</label>
-                            <input type="number" step="0.0001" id="contract-unit-price" oninput="calculateContractValues('price')" placeholder="Örn: 50.00" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-semibold">
+                            <input type="number" step="0.0001" inputmode="decimal" id="contract-unit-price" oninput="calculateContractValues('price')" placeholder="Örn: 50.00" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-semibold">
                         </div>
                         <div class="col-span-1">
                             <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Toplam Karşılık *</label>
-                            <input type="number" step="0.01" id="contract-target-amount" oninput="calculateContractValues('total')" required placeholder="Örn: 50000" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-emerald-600">
+                            <input type="number" step="0.01" inputmode="decimal" id="contract-target-amount" oninput="calculateContractValues('total')" required placeholder="Örn: 50000" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-emerald-600">
                         </div>
                         <div class="col-span-1">
                             <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Alınacak Döviz</label>
@@ -399,7 +515,7 @@
     </div>
 
     <!-- MODAL: BAĞLANTIYA KISMİ / TAM ÖDEME EKLE -->
-    <div id="modal-contract-payment" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div id="modal-contract-payment" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target === this) closeModal('modal-contract-payment')">
         <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 bg-emerald-50 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-800/40 flex justify-between items-center">
                 <h3 class="font-bold text-sm text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
@@ -420,7 +536,7 @@
                 <div>
                     <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Ödenen Tutar *</label>
                     <div class="relative">
-                        <input type="number" step="0.01" id="cpay-amount" required placeholder="Örn: 20000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-base text-emerald-600">
+                        <input type="number" step="0.01" inputmode="decimal" id="cpay-amount" required placeholder="Örn: 20000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-base text-emerald-600">
                         <span id="cpay-currency-badge" class="absolute right-3 top-2.5 font-bold text-xs text-slate-400">TRY</span>
                     </div>
                 </div>
@@ -444,7 +560,7 @@
     </div>
 
     <!-- MODAL: KAPANAN BORÇ KAYDI KALICI SİLME ONAYI -->
-    <div id="modal-delete-closed" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div id="modal-delete-closed" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target === this) closeModal('modal-delete-closed')">
         <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="p-6 text-center space-y-4">
                 <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto text-xl shadow-sm">
@@ -484,7 +600,7 @@
     </div>
 
     <!-- MODAL: ŞİFRE DEĞİŞTİR -->
-    <div id="modal-change-password" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div id="modal-change-password" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target === this) closeModal('modal-change-password')">
         <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                 <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
@@ -538,7 +654,7 @@
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-xs">
                             <i class="fa-solid fa-user"></i>
                         </span>
-                        <input type="text" id="login-username" required autocomplete="username" placeholder="admin" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700/80 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                        <input type="text" id="login-username" required autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="admin" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700/80 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 outline-none transition">
                     </div>
                 </div>
 
@@ -814,7 +930,7 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert('Şifreniz başarıyla güncellendi.');
+                    showToast('Şifreniz başarıyla güncellendi.', 'success');
                     closeModal('modal-change-password');
                 } else {
                     errBox.textContent = data.error || 'Şifre güncellenemedi.';
@@ -837,6 +953,50 @@
             if (icon) {
                 icon.className = isDark ? 'fa-solid fa-sun text-xs text-amber-400' : 'fa-solid fa-moon text-xs';
             }
+        }
+
+                // ----------------- TOAST BİLDİRİM MOTORU -----------------
+        function showToast(message, type = 'info', duration = 3800) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-emerald-600 text-white shadow-emerald-600/30',
+                error: 'bg-rose-600 text-white shadow-rose-600/30',
+                warning: 'bg-amber-600 text-white shadow-amber-600/30',
+                info: 'bg-slate-800 dark:bg-slate-700 text-white shadow-slate-900/30'
+            };
+            const icons = {
+                success: 'fa-solid fa-circle-check',
+                error: 'fa-solid fa-circle-exclamation',
+                warning: 'fa-solid fa-triangle-exclamation',
+                info: 'fa-solid fa-circle-info'
+            };
+
+            const colorClass = colors[type] || colors.info;
+            const iconClass = icons[type] || icons.info;
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl ${colorClass} text-xs font-semibold transform transition-all duration-300 translate-y-[-10px] opacity-0`;
+            toast.innerHTML = `
+                <i class="${iconClass} text-base shrink-0"></i>
+                <div class="flex-1 leading-snug whitespace-pre-line">${message}</div>
+                <button type="button" class="text-white/80 hover:text-white shrink-0 ml-2 p-1" onclick="this.parentElement.remove()">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 350);
+            }, duration);
         }
 
         function closeModal(id) {
@@ -1424,10 +1584,13 @@
             const debtors = (json && json.data) ? json.data : [];
 
             let rows = '';
+            let mobileCards = '';
             for (const d of debtors) {
                 let currencyRows = '';
+                let mobileCurrHtml = '';
                 if (!d.currencies || d.currencies.length === 0) {
                     currencyRows = '<span class="text-xs text-slate-400">İşlem kaydı yok</span>';
+                    mobileCurrHtml = '<div class="text-[11px] text-slate-400 italic">Kayıtlı döviz hareketi yok</div>';
                 } else {
                     currencyRows = d.currencies.map(c => `
                         <div class="flex items-center gap-3 py-1 border-b border-slate-100 dark:border-slate-700/40 last:border-0 text-xs">
@@ -1437,6 +1600,21 @@
                             <span class="font-bold ${c.remaining > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}">
                                 Kalan: ${parseFloat(c.remaining).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.currency_code}
                             </span>
+                        </div>
+                    `).join('');
+
+                    mobileCurrHtml = d.currencies.map(c => `
+                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700/70 text-xs">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-100 text-[11px]">${c.currency_code}</span>
+                                <span class="font-extrabold ${c.remaining > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'} text-xs">
+                                    Kalan: ${parseFloat(c.remaining).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.currency_code}
+                                </span>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/50 dark:border-slate-600/50">
+                                <span>Verilen: <strong class="text-slate-700 dark:text-slate-300">${parseFloat(c.total_given).toLocaleString('tr-TR')}</strong></span>
+                                <span>Ödenen: <strong class="text-blue-600 dark:text-blue-400">${parseFloat(c.total_paid).toLocaleString('tr-TR')}</strong></span>
+                            </div>
                         </div>
                     `).join('');
                 }
@@ -1462,7 +1640,7 @@
                                 <button onclick="viewPersonDetails(${d.id})" title="Detay ve Ekstre Gör" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-lg font-semibold transition text-xs">
                                     Detay <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
                                 </button>
-                                <button onclick="openDeleteClosedModal(${d.id}, '${d.name.replace(/'/g, "\\'")}')" title="Kapanan Borç Kaydını Sil" class="px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-lg font-semibold transition text-xs">
+                                <button onclick="openDeleteClosedModal(${d.id}, '${d.name.replace(/'/g, "\'")}')" title="Kapanan Borç Kaydını Sil" class="px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-lg font-semibold transition text-xs">
                                     <i class="fa-solid fa-trash-can mr-1"></i> Sil
                                 </button>
                             ` : `
@@ -1479,37 +1657,90 @@
                         </td>
                     </tr>
                 `;
+
+                mobileCards += `
+                    <div class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-sm space-y-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="cursor-pointer min-w-0 flex-1" onclick="viewPersonDetails(${d.id})">
+                                <div class="font-bold text-sm text-slate-900 dark:text-white truncate hover:text-emerald-600 transition">${d.name}</div>
+                                <div class="text-[11px] text-slate-400 truncate mt-0.5">${d.description || 'Not belirtilmemiş'}</div>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                ${d.phone ? `
+                                    <a href="tel:${d.phone}" title="Telefonla Ara" class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs hover:bg-emerald-100 transition">
+                                        <i class="fa-solid fa-phone"></i>
+                                    </a>
+                                ` : ''}
+                                <span class="px-2 py-1 rounded-full text-[10px] font-bold ${isClosed ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' : 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'}">
+                                    ${d.status}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="space-y-1.5">
+                            ${mobileCurrHtml}
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-700/60">
+                            <span>Son İşlem: <strong class="text-slate-600 dark:text-slate-300 font-medium">${d.last_tx_date || '-'}</strong></span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 pt-1">
+                            ${isClosed ? `
+                                <button onclick="viewPersonDetails(${d.id})" class="col-span-2 py-2 px-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl font-semibold text-xs transition text-center">
+                                    Ekstre Gör <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                                </button>
+                                <button onclick="openDeleteClosedModal(${d.id}, '${d.name.replace(/'/g, "\'")}')" class="col-span-1 py-2 px-3 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-xl font-semibold text-xs transition text-center">
+                                    <i class="fa-solid fa-trash-can mr-1"></i> Sil
+                                </button>
+                            ` : `
+                                <button onclick="openGiveDebtModal(${d.id})" class="py-2 px-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 rounded-xl font-semibold text-xs transition text-center flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-plus text-[10px]"></i> Borç
+                                </button>
+                                <button onclick="openReceivePaymentModal(${d.id})" class="py-2 px-2 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-xl font-semibold text-xs transition text-center flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-arrow-down text-[10px]"></i> Ödeme
+                                </button>
+                                <button onclick="viewPersonDetails(${d.id})" class="py-2 px-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl font-semibold text-xs transition text-center">
+                                    Ekstre >
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
             }
 
             document.getElementById('content-container').innerHTML = `
-                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-5">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 sm:p-6 space-y-5">
                     <!-- ÜST FİLTRE VE ARAMA -->
-                    <div class="flex items-center justify-between gap-4">
-                        <div class="flex items-center gap-2">
-                            <button onclick="renderDebtorsList('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ALL' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                            <button onclick="renderDebtorsList('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ALL' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
                                 Tümü
                             </button>
-                            <button onclick="renderDebtorsList('ACTIVE')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ACTIVE' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                            <button onclick="renderDebtorsList('ACTIVE')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ACTIVE' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
                                 Aktif Borçlar
                             </button>
-                            <button onclick="renderDebtorsList('CLOSED')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'CLOSED' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                            <button onclick="renderDebtorsList('CLOSED')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'CLOSED' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
                                 Kapananlar (Arşiv)
                             </button>
                         </div>
-                        <div class="flex items-center gap-3 flex-1 max-w-md justify-end">
+                        <div class="flex items-center gap-2.5 flex-1 max-w-md justify-end">
                             <div class="relative flex-1">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
                                 <input type="text" oninput="renderDebtorsList('${statusFilter}', this.value)" value="${search}" placeholder="Kişi veya firma adıyla ara..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-xs focus:outline-emerald-500">
                             </div>
                             <button onclick="openNewPersonModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 shrink-0 shadow-sm transition">
                                 <i class="fa-solid fa-user-plus text-xs"></i>
-                                <span>Yeni Kişi / Firma</span>
+                                <span class="hidden sm:inline">Yeni Kişi / Firma</span>
+                                <span class="sm:hidden">Yeni Kişi</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- TABLO -->
-                    <div class="overflow-x-auto">
+                    <!-- MOBİL KART GÖRÜNÜMÜ -->
+                    <div class="block md:hidden space-y-3">
+                        ${mobileCards || '<div class="p-8 text-center text-slate-400 text-xs">Aradığınız kriterde kayıt bulunamadı.</div>'}
+                    </div>
+
+                    <!-- MASAÜSTÜ TABLO GÖRÜNÜMÜ -->
+                    <div class="hidden md:block overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="text-[11px] font-semibold text-slate-400 border-b border-slate-200 dark:border-slate-700 uppercase bg-slate-50 dark:bg-slate-700/40">
@@ -1537,7 +1768,7 @@
             const res = await fetch(`${API_BASE}/api/person/${personId}`);
             const json = await res.json();
             if (!json.success) {
-                alert("Kişi bulunamadı");
+                showToast("Kişi bulunamadı", "error");
                 navigate('debtors');
                 return;
             }
@@ -1594,7 +1825,7 @@
 
             container.innerHTML = `
                 <div class="space-y-6">
-                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex items-center justify-between shadow-sm">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-sm">
                         <div>
                             <button onclick="navigate('debtors')" class="text-xs text-emerald-600 hover:underline mb-2 flex items-center gap-1 font-semibold">
                                 <i class="fa-solid fa-arrow-left"></i> Borçlu Listesine Geri Dön
@@ -1607,7 +1838,7 @@
                             </h2>
                             <p class="text-xs text-slate-400 mt-1">Tel: ${p.phone || 'Belirtilmemiş'} • Not: ${p.description || 'Yok'} • Kayıt: ${p.created_at ? p.created_at.slice(0, 10) : '-'}</p>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             ${!p.has_active_debt ? `
                                 <button onclick="openDeleteClosedModal(${p.id}, '${p.name.replace(/'/g, "\\'")}')" class="px-3.5 py-2 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 font-semibold rounded-xl text-xs flex items-center gap-2 transition">
                                     <i class="fa-solid fa-trash-can"></i> Kapanan Kaydı Sil
@@ -1624,7 +1855,7 @@
 
                     <div>
                         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Güncel Bakiye Durumu (Dövizler Bağımsızdır)</h3>
-                        <div class="grid grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                             ${balancesCards || '<div class="col-span-4 p-6 text-center text-slate-400 bg-white dark:bg-slate-800 rounded-xl text-xs">Henüz işlem bulunmuyor.</div>'}
                         </div>
                     </div>
@@ -1669,18 +1900,20 @@
             const contracts = (json && json.data) ? json.data : [];
 
             let rows = '';
+            let mobileCards = '';
             for (const c of contracts) {
                 const sellAmt = parseFloat(c.sell_amount);
                 const targetAmt = parseFloat(c.total_target_amount);
                 const collected = parseFloat(c.collected_amount);
                 const remaining = parseFloat(c.remaining_amount);
                 const unitPrice = parseFloat(c.unit_price);
+                const percent = targetAmt > 0 ? Math.min(100, Math.round((collected / targetAmt) * 100)) : 0;
 
                 let statusBadge = '';
                 if (c.status === 'COMPLETED') {
                     statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"><i class="fa-solid fa-circle-check mr-1"></i>Tamamlandı</span>';
                 } else if (c.status === 'PARTIAL') {
-                    statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Kısmi Ödendi</span>';
+                    statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Kısmi Ödendi (%' + percent + ')</span>';
                 } else {
                     statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300"><i class="fa-solid fa-hourglass-start mr-1"></i>Bekliyor</span>';
                 }
@@ -1715,7 +1948,7 @@
                         </td>
                         <td class="py-3.5 px-4 text-right space-x-1">
                             ${c.status !== 'COMPLETED' ? `
-                                <button onclick="openAddContractPaymentModal(${c.id}, '${c.person_name.replace(/'/g, "\\'")}', '${targetAmt}', '${remaining}', '${c.buy_currency}')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-[11px] transition">
+                                <button onclick="openAddContractPaymentModal(${c.id}, '${c.person_name.replace(/'/g, "\'")}', '${targetAmt}', '${remaining}', '${c.buy_currency}')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-[11px] transition">
                                     <i class="fa-solid fa-plus mr-1"></i> Ödeme Al
                                 </button>
                             ` : ''}
@@ -1725,37 +1958,87 @@
                         </td>
                     </tr>
                 `;
+
+                mobileCards += `
+                    <div class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono font-bold text-xs text-purple-600 dark:text-purple-400">${c.contract_number}</span>
+                            ${statusBadge}
+                        </div>
+                        <div class="cursor-pointer" onclick="viewContractDetails(${c.id})">
+                            <div class="font-bold text-sm text-slate-900 dark:text-white hover:text-purple-600 transition">${c.person_name}</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">${c.description || 'Açıklama yok'} • ${c.contract_date}</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700/70 space-y-2 text-xs">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400 text-[11px]">Satılan Döviz</span>
+                                <strong class="text-purple-700 dark:text-purple-300 font-bold">${sellAmt.toLocaleString('tr-TR')} ${c.sell_currency}</strong>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-400 text-[11px]">Birim Fiyat (Kur)</span>
+                                <strong class="text-slate-700 dark:text-slate-200">${unitPrice.toFixed(4)} ${c.buy_currency}</strong>
+                            </div>
+                            <div class="flex justify-between items-center pt-1.5 border-t border-slate-200/50 dark:border-slate-600/50">
+                                <span class="text-slate-400 text-[11px]">Toplam Karşılık</span>
+                                <strong class="text-slate-900 dark:text-white">${targetAmt.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.buy_currency}</strong>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-600 h-1.5 rounded-full overflow-hidden mt-1">
+                                <div class="bg-purple-600 h-full rounded-full" style="width: ${percent}%"></div>
+                            </div>
+                            <div class="flex justify-between items-center text-[11px] pt-1">
+                                <span class="text-blue-600 font-semibold">Tahsil: ${collected.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.buy_currency}</span>
+                                <span class="font-bold ${remaining > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}">Kalan: ${remaining.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.buy_currency}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 pt-1">
+                            ${c.status !== 'COMPLETED' ? `
+                                <button onclick="openAddContractPaymentModal(${c.id}, '${c.person_name.replace(/'/g, "\'")}', '${targetAmt}', '${remaining}', '${c.buy_currency}')" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-xs transition text-center flex items-center justify-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-plus text-[10px]"></i> Ödeme Al
+                                </button>
+                            ` : ''}
+                            <button onclick="viewContractDetails(${c.id})" class="flex-1 py-2 px-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl font-semibold text-xs transition text-center">
+                                Detay Gör <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
             }
 
             document.getElementById('content-container').innerHTML = `
-                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-5">
-                    <div class="flex items-center justify-between gap-4">
-                        <div class="flex items-center gap-2">
-                            <button onclick="renderContractsList('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ALL' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 sm:p-6 space-y-5">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                            <button onclick="renderContractsList('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ALL' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
                                 Tümü
                             </button>
-                            <button onclick="renderContractsList('PENDING')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'PENDING' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                            <button onclick="renderContractsList('PENDING')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'PENDING' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
                                 Bekleyenler
                             </button>
-                            <button onclick="renderContractsList('PARTIAL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'PARTIAL' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                            <button onclick="renderContractsList('PARTIAL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'PARTIAL' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
                                 Kısmi Ödenenler
                             </button>
-                            <button onclick="renderContractsList('COMPLETED')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'COMPLETED' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                            <button onclick="renderContractsList('COMPLETED')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'COMPLETED' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition whitespace-nowrap">
                                 Tamamlananlar
                             </button>
                         </div>
-                        <div class="flex items-center gap-3 flex-1 max-w-md">
+                        <div class="flex items-center gap-2.5 flex-1 max-w-md justify-end">
                             <div class="relative flex-1">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
                                 <input type="text" oninput="renderContractsList('${statusFilter}', this.value)" value="${search}" placeholder="Kişi, sözleşme no veya açıklama ara..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-xs focus:outline-purple-500">
                             </div>
                             <button onclick="openCreateContractModal()" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 shrink-0 transition">
-                                <i class="fa-solid fa-plus"></i> Yeni Bağlantı
+                                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Yeni Bağlantı</span><span class="sm:hidden">Yeni</span>
                             </button>
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
+                    <!-- MOBİL KART GÖRÜNÜMÜ -->
+                    <div class="block md:hidden space-y-3">
+                        ${mobileCards || '<div class="p-8 text-center text-slate-400 text-xs">Kayıtlı döviz bağlantısı bulunamadı.</div>'}
+                    </div>
+
+                    <!-- MASAÜSTÜ TABLO GÖRÜNÜMÜ -->
+                    <div class="hidden md:block overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="text-[11px] font-semibold text-slate-400 border-b border-slate-200 dark:border-slate-700 uppercase bg-slate-50 dark:bg-slate-700/40">
@@ -1786,7 +2069,7 @@
             const res = await fetch(`${API_BASE}/api/contract/${contractId}`);
             const json = await res.json();
             if (!json.success) {
-                alert("Bağlantı bulunamadı");
+                showToast("Bağlantı bulunamadı", "error");
                 navigate('contracts');
                 return;
             }
@@ -1815,7 +2098,7 @@
 
             container.innerHTML = `
                 <div class="space-y-6">
-                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex items-center justify-between shadow-sm">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-sm">
                         <div>
                             <button onclick="navigate('contracts')" class="text-xs text-purple-600 hover:underline mb-2 flex items-center gap-1 font-semibold">
                                 <i class="fa-solid fa-arrow-left"></i> Tüm Bağlantılara Geri Dön
@@ -1828,7 +2111,7 @@
                             </h2>
                             <p class="text-xs text-slate-400 mt-1">İlgili Kişi: <strong class="text-slate-700 dark:text-slate-300">${c.person_name}</strong> • Tarih: ${c.contract_date} • ${c.description || 'Açıklama yok'}</p>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             ${c.status !== 'COMPLETED' ? `
                                 <button onclick="openAddContractPaymentModal(${c.id}, '${c.person_name.replace(/'/g, "\\'")}', '${targetAmt}', '${remaining}', '${c.buy_currency}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs flex items-center gap-2 shadow-sm transition">
                                     <i class="fa-solid fa-plus"></i> Ödeme Al
@@ -1841,7 +2124,7 @@
                     </div>
 
                     <!-- METRİK KARTLARI -->
-                    <div class="grid grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                         <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
                             <span class="text-xs font-semibold text-slate-400 block mb-1">Teslim Edilen (Satılan)</span>
                             <div class="text-xl font-bold text-purple-600 dark:text-purple-400">
@@ -2045,11 +2328,11 @@
             const res = await fetch(`${API_BASE}/api/backup/create`, { method: 'POST' });
             const data = await res.json();
             if (data.success) {
-                alert('Yedekleme başarıyla tamamlandı:\n' + data.filename);
+                showToast('Yedekleme başarıyla tamamlandı: ' + data.filename, 'success');
                 updateSidebarBackupStatus();
                 renderBackupSecurityScreen();
             } else {
-                alert('Yedekleme hatası: ' + data.error);
+                showToast('Yedekleme hatası: ' + data.error, 'error');
             }
         }
 
@@ -2069,11 +2352,11 @@
             });
             const data = await res.json();
             if (data.success) {
-                alert(`Geri Yükleme Başarılı!\n${data.accounts_count} Kişi/Firma ve ${data.transactions_count} İşlem eksiksiz geri getirildi.`);
+                showToast(`Geri Yükleme Başarılı! ${data.accounts_count} Kişi/Firma ve ${data.transactions_count} İşlem eksiksiz geri getirildi.`, 'success', 5000);
                 updateSidebarBackupStatus();
                 navigate('dashboard');
             } else {
-                alert('Geri yükleme engellendi / hata: ' + data.error);
+                showToast('Geri yükleme hatası: ' + data.error, 'error');
             }
         }
 
@@ -2099,10 +2382,11 @@
             const data = await res.json();
             if (data.success) {
                 closeModal('modal-person');
+                showToast('Yeni kişi / firma başarıyla eklendi.', 'success');
                 await loadPersonsCache();
                 viewPersonDetails(data.person_id);
             } else {
-                alert('Hata: ' + data.error);
+                showToast('Hata: ' + data.error, 'error');
             }
         }
 
@@ -2125,12 +2409,13 @@
             const data = await res.json();
             if (data.success) {
                 closeModal('modal-give-debt');
+                showToast('Borç verme işlemi başarıyla kaydedildi.', 'success');
                 updateSidebarBackupStatus();
                 if (currentTab === 'dashboard') renderDashboard();
                 else if (currentTab === 'debtors') renderDebtorsList();
                 else viewPersonDetails(personId);
             } else {
-                alert('Hata: ' + data.error);
+                showToast('Hata: ' + data.error, 'error');
             }
         }
 
@@ -2153,12 +2438,13 @@
             const data = await res.json();
             if (data.success) {
                 closeModal('modal-receive-payment');
+                showToast('Tahsilat işlemi başarıyla kaydedildi.', 'success');
                 updateSidebarBackupStatus();
                 if (currentTab === 'dashboard') renderDashboard();
                 else if (currentTab === 'debtors') renderDebtorsList();
                 else viewPersonDetails(personId);
             } else {
-                alert('Hata: ' + data.error);
+                showToast('Hata: ' + data.error, 'error');
             }
         }
 
@@ -2192,10 +2478,11 @@
             const data = await res.json();
             if (data.success) {
                 closeModal('modal-create-contract');
+                showToast('Döviz bağlantısı başarıyla oluşturuldu.', 'success');
                 updateSidebarBackupStatus();
                 viewContractDetails(data.contract_id);
             } else {
-                alert('Bağlantı oluşturulamadı: ' + data.error);
+                showToast('Bağlantı oluşturulamadı: ' + data.error, 'error');
             }
         }
 
@@ -2221,10 +2508,11 @@
             const data = await res.json();
             if (data.success) {
                 closeModal('modal-contract-payment');
+                showToast('Bağlantı ödemesi başarıyla kaydedildi.', 'success');
                 updateSidebarBackupStatus();
                 viewContractDetails(contractId);
             } else {
-                alert('Ödeme kaydedilemedi: ' + data.error);
+                showToast('Ödeme kaydedilemedi: ' + data.error, 'error');
             }
         }
 
@@ -2237,10 +2525,11 @@
             });
             const data = await res.json();
             if (data.success) {
+                showToast('İşlem başarıyla iptal edildi.', 'success');
                 updateSidebarBackupStatus();
                 viewPersonDetails(personId);
             } else {
-                alert('İptal hatası: ' + data.error);
+                showToast('İptal hatası: ' + data.error, 'error');
             }
         }
 
@@ -2270,7 +2559,7 @@
                     closeModal('modal-delete-closed');
                     updateSidebarBackupStatus();
                     await loadPersonsCache();
-                    alert(data.message || 'Kapanan borç kaydı ve geçmişi başarıyla silindi.');
+                    showToast(data.message || 'Kapanan borç kaydı başarıyla silindi.', 'success');
                     if (currentTab === 'debtors') {
                         renderDebtorsList('CLOSED');
                     } else if (currentTab === 'dashboard') {
@@ -2279,10 +2568,10 @@
                         navigate('debtors', 'CLOSED');
                     }
                 } else {
-                    alert('Silme işlemi engellendi: ' + data.error);
+                    showToast('Silme işlemi engellendi: ' + data.error, 'error');
                 }
             } catch (err) {
-                alert('İşlem sırasında hata oluştu: ' + err.message);
+                showToast('İşlem hatası: ' + err.message, 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
