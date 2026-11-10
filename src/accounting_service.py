@@ -649,7 +649,9 @@ class AccountingService:
         contract["unit_price"] = to_decimal(contract["unit_price"])
         contract["total_target_amount"] = to_decimal(contract["total_target_amount"])
         contract["collected_amount"] = to_decimal(contract["collected_amount"])
-        contract["remaining_amount"] = to_decimal(contract["remaining_amount"])
+        rem = contract.get("remaining_amount") if contract.get("remaining_amount") is not None else contract.get("remaining_target_amount", 0)
+        contract["remaining_amount"] = to_decimal(rem)
+        contract["remaining_target_amount"] = to_decimal(rem)
 
         # Durum Türkçe etiketi
         status_labels = {
@@ -738,7 +740,9 @@ class AccountingService:
             d["unit_price"] = to_decimal(d["unit_price"])
             d["total_target_amount"] = to_decimal(d["total_target_amount"])
             d["collected_amount"] = to_decimal(d["collected_amount"])
-            d["remaining_amount"] = to_decimal(d["remaining_amount"])
+            rem = d.get("remaining_amount") if d.get("remaining_amount") is not None else d.get("remaining_target_amount", 0)
+            d["remaining_amount"] = to_decimal(rem)
+            d["remaining_target_amount"] = to_decimal(rem)
             d["status_label"] = status_labels.get(d["status"], d["status"])
             results.append(d)
 

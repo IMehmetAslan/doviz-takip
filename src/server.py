@@ -10,13 +10,15 @@ Features:
 - Secure restore with integrity verification
 """
 
+import os
 import http.server
 import socketserver
 import json
 import urllib.parse
+from datetime import date, datetime
 from pathlib import Path
 from decimal import Decimal
-from src.config import get_database_path, migrate_legacy_data_if_needed
+from src.config import get_database_path, migrate_legacy_data_if_needed, is_postgres_enabled, get_database_url
 from src.database import init_db
 from src.accounting_service import AccountingService
 from src.reporting_engine import ReportingEngine
@@ -35,6 +37,8 @@ class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Decimal):
             return str(obj)
+        if isinstance(obj, (date, datetime)) or hasattr(obj, "isoformat"):
+            return obj.isoformat()
         return super().default(obj)
 
 class AppApiHandler(http.server.SimpleHTTPRequestHandler):
@@ -233,7 +237,7 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
 
             elif path == "/api/currencies":
                 cur = conn.cursor()
-                cur.execute("SELECT code, name, symbol FROM currencies WHERE active = 1 ORDER BY is_base DESC, code ASC")
+                cur.execute("SELECT code, name, symbol FROM currencies ORDER BY is_base DESC, code ASC")
                 currs = [dict(r) for r in cur.fetchall()]
                 self._send_json({"success": True, "data": currs})
 
