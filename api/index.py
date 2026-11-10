@@ -12,6 +12,10 @@ if str(ROOT_DIR) not in sys.path:
 
 from src.server import AppApiHandler
 
-# Vercel entrypoint
-handler = AppApiHandler
+# Vercel entrypoint (AST parser requires explicit class definition)
+class handler(AppApiHandler):
+    pass
+
+app = handler
+application = handler
 
