@@ -617,7 +617,7 @@
             try {
                 const response = await _nativeFetch(resource, init);
                 if (response.status === 401) {
-                    const isAuth = urlStr.includes('/auth/login') || urlStr.includes('/auth/me');
+                    const isAuth = urlStr.includes('/auth/login') || urlStr.includes('/auth/me') || urlStr.includes('/backup/status');
                     if (!isAuth) {
                         setStoredToken('');
                         showLoginOverlay();
