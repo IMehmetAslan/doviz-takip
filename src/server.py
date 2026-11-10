@@ -88,9 +88,31 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Session-Token")
         self.end_headers()
 
+    def _get_clean_path(self):
+        """Vercel serverless ve yerel ortamlar için temiz API yolunu döner."""
+        # 1. Vercel orijinal yol başlıkları
+        for h in ["x-vercel-original-path", "x-real-path", "x-forwarded-uri", "x-matched-path"]:
+            val = self.headers.get(h)
+            if val and "/api/index.py" not in val:
+                p = urllib.parse.urlparse(val).path
+                if p.startswith("/api/"):
+                    return p
+
+        # 2. Query param __path
+        parsed = urllib.parse.urlparse(self.path)
+        qs = urllib.parse.parse_qs(parsed.query)
+        if "__path" in qs:
+            return "/api/" + qs["__path"][0].lstrip("/")
+
+        # 3. Path doğrudan index.py içeriyorsa temizle
+        if "/api/index.py/" in parsed.path:
+            return "/api/" + parsed.path.split("/api/index.py/")[1]
+
+        return parsed.path
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
-        path = parsed.path
+        path = self._get_clean_path()
         query = urllib.parse.parse_qs(parsed.query)
 
         # Statik UI ve PWA dosyaları (Herkese açık)
@@ -208,7 +230,7 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
-        path = parsed.path
+        path = self._get_clean_path()
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else ""
         data = json.loads(body) if body else {}
