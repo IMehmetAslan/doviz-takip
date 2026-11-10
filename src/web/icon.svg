@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#16a34a" />
+      <stop offset="100%" stop-color="#0f766e" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#grad)" />
+  <g fill="#ffffff" transform="translate(64, 64) scale(0.75)">
+    <!-- Coins stack icon -->
+    <path d="M256 0c70.7 0 128 28.7 128 64v64c0 35.3-57.3 64-128 64S128 163.3 128 128V64c0-35.3 57.3-64 128-64zm0 160c55.2 0 100-17.9 100-40s-44.8-40-100-40-100 17.9-100 40 44.8 40 100 40zM128 192v64c0 35.3 57.3 64 128 64s128-28.7 128-64V192c-29.3 22.3-75.1 36-128 36s-98.7-13.7-128-36zm0 128v64c0 35.3 57.3 64 128 64s128-28.7 128-64V320c-29.3 22.3-75.1 36-128 36s-98.7-13.7-128-36z"/>
+  </g>
+</svg>
+

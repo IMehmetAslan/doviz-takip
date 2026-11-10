@@ -1,0 +1,4 @@
+# Supabase & PostgreSQL Veritabanı Sürücüleri
+psycopg2-binary>=2.9.9
+pg8000>=1.31.0
+
