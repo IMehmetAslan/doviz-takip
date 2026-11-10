@@ -379,8 +379,12 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
     def _serve_file(self, filepath, content_type):
         path = Path(filepath)
         if not path.exists():
-            self.send_error(404, "Dosya bulunamadı")
-            return
+            root_path = Path(__file__).resolve().parent.parent / filepath
+            if root_path.exists():
+                path = root_path
+            else:
+                self.send_error(404, f"Dosya bulunamadı: {filepath}")
+                return
         content = path.read_bytes()
         self.send_response(200)
         self.send_header("Content-Type", f"{content_type}; charset=utf-8")

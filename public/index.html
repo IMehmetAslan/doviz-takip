@@ -1,0 +1,2223 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Döviz Borç ve Alacak Takip Sistemi</title>
+    <!-- PWA & Mobil Meta Etiketleri -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#16a34a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Döviz Takip">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="apple-touch-icon" href="/icon.svg">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex transition-colors duration-200">
+
+    <!-- SOL MENÜ (SADE & ZARİF NAVİGASYON - MASAÜSTÜNDE GÖRÜNÜR) -->
+    <aside class="w-56 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700/80 hidden md:flex flex-col justify-between shrink-0 select-none">
+        <div>
+            <!-- LOGO / BAŞLIK (KOMPAKT) -->
+            <div class="h-14 flex items-center px-4 border-b border-slate-100 dark:border-slate-700/70 gap-2.5">
+                <div class="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-emerald-600/30">
+                    <i class="fa-solid fa-coins text-xs"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="font-bold text-xs tracking-tight text-slate-900 dark:text-white truncate">DÖVİZ DEFTERİ</h1>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate">Borç & Alacak Takip</p>
+                </div>
+            </div>
+
+            <!-- MENÜ LİNKLERİ (SADE & ZARİF) -->
+            <nav class="p-2.5 space-y-1">
+                <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-700/40 transition text-left">
+                    <i class="fa-solid fa-chart-pie w-4 text-center text-xs text-slate-400 dark:text-slate-500"></i>
+                    <span>Ana Sayfa</span>
+                </button>
+                <button onclick="navigate('debtors', 'ALL')" id="nav-debtors" class="nav-item w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-700/40 transition text-left">
+                    <i class="fa-solid fa-users w-4 text-center text-xs text-slate-400 dark:text-slate-500"></i>
+                    <span>Borçlu Listesi</span>
+                </button>
+                <button onclick="navigate('contracts', 'ALL')" id="nav-contracts" class="nav-item w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-700/40 transition text-left">
+                    <i class="fa-solid fa-handshake w-4 text-center text-xs text-slate-400 dark:text-slate-500"></i>
+                    <span>Döviz Bağlantıları</span>
+                </button>
+                <button onclick="navigate('backup-security')" id="nav-backup-security" class="nav-item w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-700/40 transition text-left">
+                    <i class="fa-solid fa-shield-halved w-4 text-center text-xs text-slate-400 dark:text-slate-500"></i>
+                    <span>Yedekleme ve Kurtarma</span>
+                </button>
+            </nav>
+        </div>
+
+        <div>
+            <!-- SOL MENÜ ALT DURUM KARTI (KOMPAKT & MİNİMAL) -->
+            <div class="p-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-1.5">
+                <!-- Küçük Veri Durumu Göstergesi -->
+                <button onclick="navigate('backup-security')" class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition text-left min-w-0 flex-1" title="Kalıcı Veritabanı ve Yedekleme Durumu">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse"></span>
+                    <div class="truncate">
+                        <span id="sb-integrity-badge" class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block leading-tight truncate">Veriler Güvende</span>
+                        <span id="sb-last-backup-text" class="text-[9px] text-slate-400 block truncate">Yedek: Aktif</span>
+                    </div>
+                </button>
+
+                <!-- Kompakt Tema Değiştirme Butonu -->
+                <button onclick="toggleDarkMode()" id="theme-toggle-btn" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition shrink-0" title="Koyu / Açık Tema">
+                    <i id="theme-icon" class="fa-solid fa-moon text-xs"></i>
+                    <span id="theme-pill" class="hidden">Açık</span>
+                </button>
+            </div>
+
+            <!-- KULLANICI & GÜVENLİ ÇIKIŞ ALANI -->
+            <div class="px-3 py-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                <button onclick="openChangePasswordModal()" class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 hover:text-emerald-600 transition truncate" title="Şifre Değiştir">
+                    <i class="fa-solid fa-user-shield text-slate-400 text-xs"></i>
+                    <span id="sb-username-text" class="font-semibold truncate">admin</span>
+                </button>
+                <button onclick="logoutUser()" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition" title="Güvenli Çıkış Yap">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- SAĞ ANA İÇERİK ALANI -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden pb-16 md:pb-0">
+        
+        <!-- ÜST BAŞLIK BARI (SADE VE FERAH) -->
+        <header class="h-14 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700/80 px-4 md:px-8 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-2.5">
+                <div class="md:hidden w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-emerald-600/30">
+                    <i class="fa-solid fa-coins text-xs"></i>
+                </div>
+                <h2 id="page-title" class="text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight">Genel Bakış & Özet</h2>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="header-user-badge" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300">
+                    <i class="fa-solid fa-circle-user text-emerald-600"></i>
+                    <span id="header-username">admin</span>
+                </span>
+                <button onclick="openChangePasswordModal()" class="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white" title="Hesap / Şifre">
+                    <i class="fa-solid fa-key text-xs"></i>
+                </button>
+                <button onclick="logoutUser()" class="md:hidden p-2 rounded-lg text-rose-500 hover:text-rose-700" title="Çıkış Yap">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- DİNAMİK İÇERİK KONTEYNERİ -->
+        <div id="content-container" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+            <!-- JavaScript dinamik render edecek -->
+        </div>
+    </main>
+
+    <!-- MOBİL ALT GEZİNME BARI (BOTTOM NAVIGATION) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700/80 px-2 flex justify-around items-center h-16 shadow-lg select-none">
+        <button onclick="navigate('dashboard')" id="nav-dashboard-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
+            <i class="fa-solid fa-chart-pie text-lg mb-0.5"></i>
+            <span class="text-[10px] font-medium">Özet</span>
+        </button>
+        <button onclick="navigate('debtors', 'ALL')" id="nav-debtors-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
+            <i class="fa-solid fa-users text-lg mb-0.5"></i>
+            <span class="text-[10px] font-medium">Borçlular</span>
+        </button>
+        <button onclick="navigate('contracts', 'ALL')" id="nav-contracts-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
+            <i class="fa-solid fa-handshake text-lg mb-0.5"></i>
+            <span class="text-[10px] font-medium">Bağlantılar</span>
+        </button>
+        <button onclick="navigate('backup-security')" id="nav-backup-security-mobile" class="mobile-nav-btn flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
+            <i class="fa-solid fa-shield-halved text-lg mb-0.5"></i>
+            <span class="text-[10px] font-medium">Yedek</span>
+        </button>
+        <button onclick="toggleDarkMode()" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-500 dark:text-slate-400">
+            <i class="fa-solid fa-circle-half-stroke text-lg mb-0.5"></i>
+            <span class="text-[10px] font-medium">Tema</span>
+        </button>
+    </nav>
+
+    <!-- MODAL: YENİ KİŞİ / FİRMA EKLE -->
+    <div id="modal-person" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-emerald-600"></i> Yeni Kişi / Firma Ekle
+                </h3>
+                <button onclick="closeModal('modal-person')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="submitNewPerson(event)" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Kişi veya Firma Adı *</label>
+                    <input type="text" id="person-name" required placeholder="Örn: ABC Firması veya Ahmet Yılmaz" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-emerald-500 font-medium">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Telefon Numarası (İsteğe bağlı)</label>
+                    <input type="text" id="person-phone" placeholder="0532 123 45 67" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Açıklama / Not</label>
+                    <textarea id="person-desc" rows="2" placeholder="İlişki, iş tanımı veya özel notlar..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white"></textarea>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modal-person')" class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition">İptal</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold shadow-md shadow-emerald-600/20 transition">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: BORÇ VERME İŞLEMİ -->
+    <div id="modal-give-debt" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 bg-emerald-50 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-800/40 flex justify-between items-center">
+                <h3 class="font-bold text-sm text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-arrow-up text-emerald-600"></i> Borç Verme İşlemi
+                </h3>
+                <button onclick="closeModal('modal-give-debt')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="submitGiveDebt(event)" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Borç Verilen Kişi / Firma *</label>
+                    <select id="debt-person-id" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-medium focus:outline-emerald-500">
+                        <!-- JS dolduracak -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Verilen Tutar *</label>
+                        <input type="number" step="0.01" id="debt-amount" required placeholder="Örn: 10000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-emerald-600">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Para Birimi *</label>
+                        <select id="debt-currency" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold">
+                            <option value="USD">USD ($) - Amerikan Doları</option>
+                            <option value="EUR">EUR (€) - Euro</option>
+                            <option value="GBP">GBP (£) - İngiliz Sterlini</option>
+                            <option value="TRY">TRY (₺) - Türk Lirası</option>
+                            <option value="CHF">CHF - İsviçre Frangı</option>
+                            <option value="SAR">SAR - Suudi Riyali</option>
+                            <option value="AED">AED - BAE Dirhemi</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Veriliş Tarihi *</label>
+                        <input type="date" id="debt-date" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Döviz Kuru (İsteğe bağlı)</label>
+                        <input type="number" step="0.0001" id="debt-rate" placeholder="Örn: 34.50" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Açıklama</label>
+                    <input type="text" id="debt-desc" placeholder="Örn: Ticari finansman desteği / 1. avans..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modal-give-debt')" class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition">İptal</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold shadow-md shadow-emerald-600/20 transition">Borcu Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ÖDEME ALMA İŞLEMİ -->
+    <div id="modal-receive-payment" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 bg-blue-50 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-800/40 flex justify-between items-center">
+                <h3 class="font-bold text-sm text-blue-900 dark:text-blue-300 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-arrow-down text-blue-600"></i> Ödeme Alma İşlemi
+                </h3>
+                <button onclick="closeModal('modal-receive-payment')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="submitReceivePayment(event)" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Ödeme Yapan Kişi / Firma *</label>
+                    <select id="pay-person-id" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-medium focus:outline-blue-500">
+                        <!-- JS dolduracak -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Ödenen Tutar *</label>
+                        <input type="number" step="0.01" id="pay-amount" required placeholder="Örn: 2000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-blue-600">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Para Birimi *</label>
+                        <select id="pay-currency" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold">
+                            <option value="USD">USD ($) - Amerikan Doları</option>
+                            <option value="EUR">EUR (€) - Euro</option>
+                            <option value="GBP">GBP (£) - İngiliz Sterlini</option>
+                            <option value="TRY">TRY (₺) - Türk Lirası</option>
+                            <option value="CHF">CHF - İsviçre Frangı</option>
+                            <option value="SAR">SAR - Suudi Riyali</option>
+                            <option value="AED">AED - BAE Dirhemi</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Ödeme Tarihi *</label>
+                        <input type="date" id="pay-date" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Döviz Kuru (İsteğe bağlı)</label>
+                        <input type="number" step="0.0001" id="pay-rate" placeholder="Örn: 34.50" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Açıklama</label>
+                    <input type="text" id="pay-desc" placeholder="Örn: 1. taksit ödemesi / Kısmi tahsilat..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modal-receive-payment')" class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition">İptal</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold shadow-md shadow-blue-600/20 transition">Ödemeyi Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: YENİ BAĞLANTI OLUŞTUR -->
+    <div id="modal-create-contract" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 bg-purple-50 dark:bg-purple-950/30 border-b border-purple-100 dark:border-purple-800/40 flex justify-between items-center">
+                <h3 class="font-bold text-sm text-purple-900 dark:text-purple-300 flex items-center gap-2">
+                    <i class="fa-solid fa-handshake text-purple-600"></i> Yeni Döviz Bağlantı İşlemi
+                </h3>
+                <button onclick="closeModal('modal-create-contract')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="submitCreateContract(event)" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">İşlem Yapılacak Kişi / Firma *</label>
+                    <select id="contract-person-id" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-medium focus:outline-purple-500">
+                        <!-- JS dolduracak -->
+                    </select>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600 space-y-3">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 block">1. Satılacak / Verilecek Döviz</span>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Satılacak Miktar *</label>
+                            <input type="number" step="0.01" id="contract-sell-amount" oninput="calculateContractValues('amount')" required placeholder="Örn: 1000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-purple-600">
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Satılacak Para Birimi *</label>
+                            <select id="contract-sell-currency" onchange="calculateContractValues('currency')" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold">
+                                <option value="EUR" selected>EUR (€) - Euro</option>
+                                <option value="USD">USD ($) - Amerikan Doları</option>
+                                <option value="GBP">GBP (£) - İngiliz Sterlini</option>
+                                <option value="TRY">TRY (₺) - Türk Lirası</option>
+                                <option value="CHF">CHF - İsviçre Frangı</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 space-y-3">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">2. Karşılığında Alınacak Tutar & Kur</span>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="col-span-1">
+                            <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Birim Fiyat / Kur</label>
+                            <input type="number" step="0.0001" id="contract-unit-price" oninput="calculateContractValues('price')" placeholder="Örn: 50.00" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-semibold">
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Toplam Karşılık *</label>
+                            <input type="number" step="0.01" id="contract-target-amount" oninput="calculateContractValues('total')" required placeholder="Örn: 50000" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-sm text-emerald-600">
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Alınacak Döviz</label>
+                            <select id="contract-buy-currency" class="w-full px-2.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold">
+                                <option value="TRY" selected>TRY (₺)</option>
+                                <option value="USD">USD ($)</option>
+                                <option value="EUR">EUR (€)</option>
+                                <option value="GBP">GBP (£)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="contract-calc-hint" class="text-[11px] text-slate-500 font-medium">
+                        Özet: <strong id="hint-sell-text" class="text-purple-600">0 EUR</strong> teslim edilecek, karşılığında <strong id="hint-buy-text" class="text-emerald-600">0 TL</strong> alacak yazılacaktır.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">İşlem Tarihi *</label>
+                        <input type="date" id="contract-date" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Açıklama</label>
+                        <input type="text" id="contract-desc" placeholder="Örn: İthalat bağlantısı kur kilitleme..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modal-create-contract')" class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition">İptal</button>
+                    <button type="submit" class="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-semibold shadow-md shadow-purple-600/20 transition">Bağlantıyı Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: BAĞLANTIYA KISMİ / TAM ÖDEME EKLE -->
+    <div id="modal-contract-payment" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 bg-emerald-50 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-800/40 flex justify-between items-center">
+                <h3 class="font-bold text-sm text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
+                    <i class="fa-solid fa-money-bill-transfer text-emerald-600"></i> Bağlantı Ödemesi / Tahsilat Ekle
+                </h3>
+                <button onclick="closeModal('modal-contract-payment')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="submitContractPayment(event)" class="p-6 space-y-4 text-xs">
+                <input type="hidden" id="cpay-contract-id">
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600 text-xs space-y-1">
+                    <div class="font-semibold text-slate-700 dark:text-slate-200" id="cpay-person-name">Kişi: -</div>
+                    <div class="text-slate-500 flex justify-between">
+                        <span>Toplam Hedef: <strong id="cpay-target-amount" class="text-slate-800 dark:text-white">-</strong></span>
+                        <span>Kalan Bakiye: <strong id="cpay-remaining-amount" class="text-rose-600">-</strong></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Ödenen Tutar *</label>
+                    <div class="relative">
+                        <input type="number" step="0.01" id="cpay-amount" required placeholder="Örn: 20000" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-base text-emerald-600">
+                        <span id="cpay-currency-badge" class="absolute right-3 top-2.5 font-bold text-xs text-slate-400">TRY</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Ödeme Tarihi *</label>
+                    <input type="date" id="cpay-date" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Açıklama</label>
+                    <input type="text" id="cpay-desc" placeholder="Örn: 1. taksit havale / Elden nakit..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modal-contract-payment')" class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition">İptal</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold shadow-md shadow-emerald-600/20 transition">Ödemeyi Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: KAPANAN BORÇ KAYDI KALICI SİLME ONAYI -->
+    <div id="modal-delete-closed" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="p-6 text-center space-y-4">
+                <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto text-xl shadow-sm">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Kapanan Borç Kaydını Sil</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-semibold" id="delete-closed-target-name">
+                        <!-- JS: Seçilen Kayıt -->
+                    </p>
+                    <div class="mt-4 p-3.5 rounded-xl bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-left space-y-1.5">
+                        <div class="text-xs font-bold text-rose-900 dark:text-rose-300 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-exclamation text-rose-600"></i>
+                            <span>Bu borç kaydını ve ilişkili işlem geçmişini kalıcı olarak silmek istediğinize emin misiniz?</span>
+                        </div>
+                        <p class="text-[11px] text-rose-700 dark:text-rose-400 leading-relaxed">
+                            Bu işlem geri alınamaz. Seçilen kapanmış cariye ait geçmiş borç ve tahsilat hareketleri sistemden tamamen kaldırılır.
+                        </p>
+                    </div>
+                    <div class="mt-3 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 text-[11px] text-emerald-800 dark:text-emerald-300 text-left flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-emerald-600 shrink-0"></i>
+                        <span>Veri güvenliği için silme öncesinde otomatik veritabanı yedeği alınacaktır.</span>
+                    </div>
+                </div>
+                <input type="hidden" id="delete-closed-person-id">
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button type="button" onclick="closeModal('modal-delete-closed')" class="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-600 font-semibold text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                        Vazgeç
+                    </button>
+                    <button type="button" id="btn-confirm-delete-closed" onclick="executeDeleteClosedRecord()" class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 font-semibold text-xs text-white shadow-sm shadow-rose-600/30 transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span>Kalıcı Olarak Sil</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ŞİFRE DEĞİŞTİR -->
+    <div id="modal-change-password" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-key text-emerald-600"></i> Şifre Değiştir
+                </h3>
+                <button onclick="closeModal('modal-change-password')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="submitChangePassword(event)" class="p-6 space-y-4 text-xs">
+                <div id="cp-error-alert" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40 text-xs font-semibold"></div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Mevcut Şifre</label>
+                    <input type="password" id="cp-old-password" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Yeni Şifre (En az 6 karakter)</label>
+                    <input type="password" id="cp-new-password" required minlength="6" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-600 dark:text-slate-300">Yeni Şifre (Tekrar)</label>
+                    <input type="password" id="cp-new-password2" required minlength="6" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modal-change-password')" class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition">İptal</button>
+                    <button type="submit" id="btn-submit-cp" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold shadow-md shadow-emerald-600/20 transition">Şifreyi Güncelle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TAM EKRAN GÜVENLİ GİRİŞ EKRANI (LOGIN OVERLAY) -->
+    <div id="loginOverlay" class="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center p-4">
+        <div class="w-full max-w-sm bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 p-8 space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-emerald-600/30 mx-auto">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <h2 class="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">DÖVİZ DEFTERİ</h2>
+                <p class="text-xs text-slate-400 font-medium">Kişisel Borç & Alacak Takip Sistemi</p>
+            </div>
+
+            <form onsubmit="submitLogin(event)" class="space-y-4">
+                <div id="login-error-alert" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-semibold leading-relaxed">
+                    <!-- Hata Mesajı -->
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">Kullanıcı Adı</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-xs">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="login-username" required autocomplete="username" placeholder="admin" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700/80 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300">Şifre</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-xs">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="login-password" required autocomplete="current-password" placeholder="••••••••" class="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-700/80 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                        <button type="button" onclick="togglePasswordVisibility('login-password', 'login-pwd-eye')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 text-xs">
+                            <i id="login-pwd-eye" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-login-submit" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Güvenli Giriş Yap</span>
+                </button>
+            </form>
+
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60 text-center">
+                <span class="text-[10px] text-slate-400 flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                    <span>Bilgisayar ve Mobil Ortak Erişim • SSL/TLS Korumalı</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT MOTORU -->
+    <script>
+        const API_BASE = window.location.origin;
+        let currentTab = 'dashboard';
+        let personsCache = [];
+
+        // ----------------- OTURUM VE FETCH GÜVENLİK SARMALAYICISI -----------------
+        function getStoredToken() {
+            return localStorage.getItem('doviz_session_token') || '';
+        }
+
+        function setStoredToken(token) {
+            if (token) localStorage.setItem('doviz_session_token', token);
+            else localStorage.removeItem('doviz_session_token');
+        }
+
+        // Native fetch interceptor: Tüm API isteklerine güvenli oturum token'ını otomatik ekler
+        const _nativeFetch = window.fetch;
+        window.fetch = async function(resource, init = {}) {
+            init = init || {};
+            init.headers = init.headers || {};
+
+            const urlStr = typeof resource === 'string' ? resource : (resource.url || '');
+            const token = getStoredToken();
+
+            if (init.headers instanceof Headers) {
+                if (token && !init.headers.has('Authorization')) {
+                    init.headers.set('Authorization', 'Bearer ' + token);
+                    init.headers.set('X-Session-Token', token);
+                }
+            } else {
+                if (token && !init.headers['Authorization']) {
+                    init.headers['Authorization'] = 'Bearer ' + token;
+                    init.headers['X-Session-Token'] = token;
+                }
+            }
+
+            try {
+                const response = await _nativeFetch(resource, init);
+                if (response.status === 401 && !urlStr.includes('/api/auth/login')) {
+                    setStoredToken('');
+                    showLoginOverlay();
+                }
+                return response;
+            } catch (err) {
+                throw err;
+            }
+        };
+
+        // PWA Service Worker Kaydı
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js').catch(err => {
+                    console.log('ServiceWorker kaydı:', err);
+                });
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            checkAuthAndInit();
+        });
+
+        function showLoginOverlay() {
+            const el = document.getElementById('loginOverlay');
+            if (el) el.classList.remove('hidden');
+        }
+
+        function hideLoginOverlay() {
+            const el = document.getElementById('loginOverlay');
+            if (el) el.classList.add('hidden');
+        }
+
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye';
+            }
+        }
+
+        async function checkAuthAndInit() {
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/me`);
+                const json = await res.json();
+                if (json.success && json.user) {
+                    hideLoginOverlay();
+                    const uname = json.user.username;
+                    const uBadge = document.getElementById('header-username');
+                    const uSide = document.getElementById('sb-username-text');
+                    if (uBadge) uBadge.textContent = uname;
+                    if (uSide) uSide.textContent = uname;
+                    
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('debt-date').value = today;
+                    document.getElementById('pay-date').value = today;
+                    loadPersonsCache();
+                    updateSidebarBackupStatus();
+                    navigate('dashboard');
+                    return;
+                }
+            } catch (e) {
+                console.error("Auth kontrol hatası:", e);
+            }
+            showLoginOverlay();
+        }
+
+        async function submitLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-login-submit');
+            const errBox = document.getElementById('login-error-alert');
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            errBox.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Giriş yapılıyor...';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                const token = data.token || (data.data && data.data.token);
+                if (data.success && token) {
+                    setStoredToken(token);
+                    hideLoginOverlay();
+                    checkAuthAndInit();
+                } else {
+                    errBox.textContent = data.error || 'Kullanıcı adı veya şifre hatalı.';
+                    errBox.classList.remove('hidden');
+                }
+            } catch (err) {
+                errBox.textContent = 'Sunucuya bağlanılamadı: ' + err.message;
+                errBox.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> <span>Güvenli Giriş Yap</span>';
+            }
+        }
+
+        async function logoutUser() {
+            if (!confirm('Oturumu kapatmak istediğinize emin misiniz?')) return;
+            try {
+                await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST' });
+            } catch (e) {}
+            setStoredToken('');
+            showLoginOverlay();
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('cp-old-password').value = '';
+            document.getElementById('cp-new-password').value = '';
+            document.getElementById('cp-new-password2').value = '';
+            document.getElementById('cp-error-alert').classList.add('hidden');
+            openModal('modal-change-password');
+        }
+
+        async function submitChangePassword(e) {
+            e.preventDefault();
+            const oldPwd = document.getElementById('cp-old-password').value;
+            const newPwd = document.getElementById('cp-new-password').value;
+            const newPwd2 = document.getElementById('cp-new-password2').value;
+            const errBox = document.getElementById('cp-error-alert');
+
+            if (newPwd !== newPwd2) {
+                errBox.textContent = 'Yeni şifreler birbiriyle eşleşmiyor.';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-cp');
+            btn.disabled = true;
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ old_password: oldPwd, new_password: newPwd })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Şifreniz başarıyla güncellendi.');
+                    closeModal('modal-change-password');
+                } else {
+                    errBox.textContent = data.error || 'Şifre güncellenemedi.';
+                    errBox.classList.remove('hidden');
+                }
+            } catch (err) {
+                errBox.textContent = 'Hata: ' + err.message;
+                errBox.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            const pill = document.getElementById('theme-pill');
+            if (pill) pill.textContent = isDark ? 'Koyu' : 'Açık';
+            const icon = document.getElementById('theme-icon');
+            if (icon) {
+                icon.className = isDark ? 'fa-solid fa-sun text-xs text-amber-400' : 'fa-solid fa-moon text-xs';
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        async function updateSidebarBackupStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/api/backup/status`);
+                const json = await res.json();
+                if (json.success) {
+                    const d = json.data;
+                    const isOk = d.integrity_status && d.integrity_status.includes('Sağlam');
+                    const badge = document.getElementById('sb-integrity-badge');
+                    if (badge) {
+                        badge.textContent = isOk ? 'Veriler Güvende' : 'Veri Uyarısı';
+                        badge.className = isOk 
+                            ? 'text-[11px] font-semibold text-slate-700 dark:text-slate-300 block leading-tight truncate' 
+                            : 'text-[11px] font-semibold text-rose-600 dark:text-rose-400 block leading-tight truncate';
+                    }
+                    const text = document.getElementById('sb-last-backup-text');
+                    if (text) {
+                        text.textContent = d.last_backup_date ? ('Yedek: ' + d.last_backup_date.split(' ')[0]) : 'Yedek: Aktif';
+                    }
+                }
+            } catch (err) {
+                console.error("Yedek durumu güncellenemedi:", err);
+            }
+        }
+
+        async function loadPersonsCache() {
+            try {
+                const res = await fetch(`${API_BASE}/api/persons/simple`);
+                const json = await res.json();
+                if (json.success) {
+                    personsCache = json.data;
+                    const options = '<option value="">-- Kişi / Firma Seçiniz --</option>' + 
+                        personsCache.map(p => `<option value="${p.id}">${p.name} ${p.phone ? '('+p.phone+')' : ''}</option>`).join('');
+                    
+                    document.getElementById('debt-person-id').innerHTML = options;
+                    document.getElementById('pay-person-id').innerHTML = options;
+                    const contractSelect = document.getElementById('contract-person-id');
+                    if (contractSelect) contractSelect.innerHTML = options;
+                }
+            } catch (err) {
+                console.error("Kişiler yüklenemedi:", err);
+            }
+        }
+
+        function openNewPersonModal() {
+            document.getElementById('person-name').value = '';
+            document.getElementById('person-phone').value = '';
+            document.getElementById('person-desc').value = '';
+            openModal('modal-person');
+        }
+
+        function openGiveDebtModal(preselectedPersonId = null, preselectedCurrency = null) {
+            loadPersonsCache().then(() => {
+                if (preselectedPersonId) {
+                    document.getElementById('debt-person-id').value = preselectedPersonId;
+                }
+                if (preselectedCurrency) {
+                    document.getElementById('debt-currency').value = preselectedCurrency;
+                }
+                document.getElementById('debt-amount').value = '';
+                document.getElementById('debt-desc').value = '';
+                openModal('modal-give-debt');
+            });
+        }
+
+        function openReceivePaymentModal(preselectedPersonId = null, preselectedCurrency = null) {
+            loadPersonsCache().then(() => {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('pay-date').value = today;
+                if (preselectedPersonId) {
+                    document.getElementById('pay-person-id').value = preselectedPersonId;
+                }
+                if (preselectedCurrency) {
+                    document.getElementById('pay-currency').value = preselectedCurrency;
+                }
+                document.getElementById('pay-amount').value = '';
+                document.getElementById('pay-rate').value = '';
+                document.getElementById('pay-desc').value = '';
+                openModal('modal-receive-payment');
+            });
+        }
+
+        function openCreateContractModal(preselectedPersonId = null) {
+            loadPersonsCache().then(() => {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('contract-date').value = today;
+                if (preselectedPersonId) {
+                    document.getElementById('contract-person-id').value = preselectedPersonId;
+                }
+                document.getElementById('contract-sell-amount').value = '';
+                document.getElementById('contract-unit-price').value = '';
+                document.getElementById('contract-target-amount').value = '';
+                document.getElementById('contract-desc').value = '';
+                calculateContractValues();
+                openModal('modal-create-contract');
+            });
+        }
+
+        function calculateContractValues(triggeredBy = 'amount') {
+            const sellAmt = parseFloat(document.getElementById('contract-sell-amount').value) || 0;
+            const unitPriceInput = document.getElementById('contract-unit-price');
+            const targetAmtInput = document.getElementById('contract-target-amount');
+            let unitPrice = parseFloat(unitPriceInput.value) || 0;
+            let targetAmt = parseFloat(targetAmtInput.value) || 0;
+
+            if (triggeredBy === 'amount') {
+                if (sellAmt > 0 && unitPrice > 0) {
+                    targetAmt = sellAmt * unitPrice;
+                    targetAmtInput.value = targetAmt.toFixed(2);
+                } else if (sellAmt > 0 && targetAmt > 0) {
+                    unitPrice = targetAmt / sellAmt;
+                    unitPriceInput.value = unitPrice.toFixed(4);
+                }
+            } else if (triggeredBy === 'price') {
+                if (sellAmt > 0 && unitPrice > 0) {
+                    targetAmt = sellAmt * unitPrice;
+                    targetAmtInput.value = targetAmt.toFixed(2);
+                }
+            } else if (triggeredBy === 'total') {
+                if (sellAmt > 0 && targetAmt > 0) {
+                    unitPrice = targetAmt / sellAmt;
+                    unitPriceInput.value = unitPrice.toFixed(4);
+                }
+            }
+
+            const sellCurr = document.getElementById('contract-sell-currency').value;
+            const buyCurr = document.getElementById('contract-buy-currency').value;
+            document.getElementById('hint-sell-text').textContent = `${sellAmt.toLocaleString('tr-TR')} ${sellCurr}`;
+            document.getElementById('hint-buy-text').textContent = `${targetAmt.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${buyCurr}`;
+        }
+
+        function openAddContractPaymentModal(contractId, personName, targetAmt, remainingAmt, buyCurr) {
+            document.getElementById('cpay-contract-id').value = contractId;
+            document.getElementById('cpay-person-name').textContent = `Kişi / Firma: ${personName}`;
+            document.getElementById('cpay-target-amount').textContent = `${parseFloat(targetAmt).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${buyCurr}`;
+            document.getElementById('cpay-remaining-amount').textContent = `${parseFloat(remainingAmt).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${buyCurr}`;
+            document.getElementById('cpay-currency-badge').textContent = buyCurr;
+            document.getElementById('cpay-amount').value = remainingAmt;
+            document.getElementById('cpay-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('cpay-desc').value = '';
+            openModal('modal-contract-payment');
+        }
+
+        async function navigate(tab, param = null) {
+            currentTab = tab;
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-emerald-50', 'dark:bg-emerald-950/40', 'text-emerald-700', 'dark:text-emerald-400', 'font-semibold');
+                el.classList.add('text-slate-600', 'dark:text-slate-400', 'font-medium');
+                const ic = el.querySelector('i');
+                if (ic) {
+                    ic.classList.remove('text-emerald-600', 'dark:text-emerald-400');
+                    ic.classList.add('text-slate-400', 'dark:text-slate-500');
+                }
+            });
+
+            let activeId = `nav-${tab}`;
+            if (tab === 'archive') activeId = 'nav-debtors';
+            if (tab === 'contracts') activeId = 'nav-contracts';
+            if (tab === 'backup-security') activeId = 'nav-backup-security';
+            const activeNav = document.getElementById(activeId);
+            if (activeNav) {
+                activeNav.classList.remove('text-slate-600', 'dark:text-slate-400', 'font-medium');
+                activeNav.classList.add('bg-emerald-50', 'dark:bg-emerald-950/40', 'text-emerald-700', 'dark:text-emerald-400', 'font-semibold');
+                const ic = activeNav.querySelector('i');
+                if (ic) {
+                    ic.classList.remove('text-slate-400', 'dark:text-slate-500');
+                    ic.classList.add('text-emerald-600', 'dark:text-emerald-400');
+                }
+            }
+
+            // Mobil bottom nav butonları güncellemesi
+            document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+                btn.classList.remove('text-emerald-600', 'dark:text-emerald-400', 'font-bold');
+                btn.classList.add('text-slate-500', 'dark:text-slate-400');
+            });
+            let mobileActiveId = `nav-${tab}-mobile`;
+            if (tab === 'archive') mobileActiveId = 'nav-debtors-mobile';
+            const mobileActiveBtn = document.getElementById(mobileActiveId);
+            if (mobileActiveBtn) {
+                mobileActiveBtn.classList.remove('text-slate-500', 'dark:text-slate-400');
+                mobileActiveBtn.classList.add('text-emerald-600', 'dark:text-emerald-400', 'font-bold');
+            }
+
+            const titles = {
+                dashboard: 'Ana Sayfa (Dashboard)',
+                debtors: 'Borçlu Listesi (Kişiler ve Firmalar)',
+                contracts: 'Döviz Bağlantı İşlemleri (Forward / Satış)',
+                archive: 'Kapanan Borçlar Arşivi',
+                'backup-security': 'Kalıcı Veri Güvenliği, Yedekleme ve Kurtarma Merkezi'
+            };
+            document.getElementById('page-title').textContent = titles[tab] || 'Borç & Alacak Takibi';
+
+            const container = document.getElementById('content-container');
+            container.innerHTML = '<div class="flex items-center justify-center p-16 text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></div>';
+
+            if (tab === 'dashboard') await renderDashboard();
+            else if (tab === 'debtors') await renderDebtorsList(param || 'ALL');
+            else if (tab === 'contracts') await renderContractsList(param || 'ALL');
+            else if (tab === 'archive') await renderDebtorsList('CLOSED');
+            else if (tab === 'backup-security') await renderBackupSecurityScreen();
+        }
+
+        // ----------------- 1. DASHBOARD EKRANI -----------------
+        async function renderDashboard() {
+            const [dashRes, debtorsRes] = await Promise.all([
+                fetch(`${API_BASE}/api/dashboard`),
+                fetch(`${API_BASE}/api/debtors?status=ACTIVE`)
+            ]);
+            const dashJson = await dashRes.json();
+            const debtorsJson = await debtorsRes.json();
+            const d = dashJson.data;
+            const activeDebtors = debtorsJson.data || [];
+
+            const currSymbols = { USD: '$', EUR: '€', GBP: '£', TRY: '₺', CHF: 'CHF', SAR: '﷼', AED: 'د.إ' };
+
+            // 1. Üst Özet: Kalan Alacaklar ve Tahsil Edilenler (Dövizler ayrı ayrı listelenir)
+            const remainingCurrs = Object.entries(d.currency_summary)
+                .filter(([_, c]) => parseFloat(c.total_remaining) > 0);
+            let remainingSummaryHtml = '';
+            if (remainingCurrs.length > 0) {
+                remainingSummaryHtml = remainingCurrs.map(([curr, c]) => `
+                    <div class="flex items-center justify-between text-xs py-0.5">
+                        <span class="font-semibold text-slate-500 dark:text-slate-400">${curr}</span>
+                        <span class="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">
+                            ${parseFloat(c.total_remaining).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currSymbols[curr] || curr}
+                        </span>
+                    </div>
+                `).join('');
+            } else {
+                remainingSummaryHtml = '<div class="text-xs font-semibold text-slate-400 mt-1">Aktif alacak bulunmuyor</div>';
+            }
+
+            const receivedCurrs = Object.entries(d.currency_summary)
+                .filter(([_, c]) => parseFloat(c.total_received) > 0);
+            let receivedSummaryHtml = '';
+            if (receivedCurrs.length > 0) {
+                receivedSummaryHtml = receivedCurrs.map(([curr, c]) => `
+                    <div class="flex items-center justify-between text-xs py-0.5">
+                        <span class="font-semibold text-slate-500 dark:text-slate-400">${curr}</span>
+                        <span class="font-extrabold text-blue-600 dark:text-blue-400 text-sm">
+                            ${parseFloat(c.total_received).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${currSymbols[curr] || curr}
+                        </span>
+                    </div>
+                `).join('');
+            } else {
+                receivedSummaryHtml = '<div class="text-xs font-semibold text-slate-400 mt-1">Henüz tahsilat yapılmadı</div>';
+            }
+
+            // 2. Döviz Bakiyeleri Kartları (Verilen toplam, Tahsil edilen, Kalan alacak)
+            let currencyCardsHtml = '';
+            const currEntries = Object.entries(d.currency_summary);
+            if (currEntries.length === 0) {
+                currencyCardsHtml = '<div class="col-span-full p-6 text-center text-slate-400 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs">Henüz kayıtlı bir döviz işlemi bulunmuyor.</div>';
+            } else {
+                for (const [curr, c] of currEntries) {
+                    const remaining = parseFloat(c.total_remaining);
+                    const isPositive = remaining > 0;
+                    currencyCardsHtml += `
+                        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-sm flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600 transition">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                                    <span class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 inline-flex items-center justify-center font-bold text-xs">
+                                        ${currSymbols[curr] || curr.charAt(0)}
+                                    </span>
+                                    ${curr}
+                                </span>
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${isPositive ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}">
+                                    ${isPositive ? 'Açık Bakiye' : 'Kapandı'}
+                                </span>
+                            </div>
+                            <div class="my-2">
+                                <span class="text-[11px] font-medium text-slate-400 block mb-0.5">Kalan Alacak</span>
+                                <div class="text-xl font-extrabold ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}">
+                                    ${remaining.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} <span class="text-xs font-normal">${curr}</span>
+                                </div>
+                            </div>
+                            <div class="pt-2.5 border-t border-slate-100 dark:border-slate-700/60 grid grid-cols-2 gap-2 text-[11px]">
+                                <div>
+                                    <span class="text-slate-400 block text-[10px]">Verilen Toplam</span>
+                                    <strong class="text-slate-700 dark:text-slate-300 font-semibold">${parseFloat(c.total_given).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</strong>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-slate-400 block text-[10px]">Tahsil Edilen</span>
+                                    <strong class="text-blue-600 dark:text-blue-400 font-semibold">${parseFloat(c.total_received).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            // 4. Aktif Borçlar Listesi (Kişi/Firma adı, döviz cinsi, kalan borç, son işlem tarihi)
+            let activeDebtsRows = '';
+            let activeDebtCount = 0;
+            for (const debtor of activeDebtors) {
+                const pendingCurrs = (debtor.currencies || []).filter(c => !c.is_closed && parseFloat(c.remaining) > 0);
+                for (const c of pendingCurrs) {
+                    activeDebtCount++;
+                    if (activeDebtCount <= 8) {
+                        const remVal = parseFloat(c.remaining).toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+                        activeDebtsRows += `
+                            <tr class="border-b border-slate-100 dark:border-slate-700/60 hover:bg-slate-50/80 dark:hover:bg-slate-700/20 transition cursor-pointer text-xs" onclick="viewPersonDetails(${debtor.id})">
+                                <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-100">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center text-xs">
+                                            ${debtor.name.charAt(0).toUpperCase()}
+                                        </span>
+                                        <div>
+                                            <span class="hover:text-emerald-600 transition block leading-tight font-medium">${debtor.name}</span>
+                                            ${debtor.phone ? `<span class="text-[10px] text-slate-400 font-normal">${debtor.phone}</span>` : ''}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-2.5 px-3">
+                                    <span class="px-2 py-0.5 rounded-md font-bold text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                                        ${c.currency_code}
+                                    </span>
+                                </td>
+                                <td class="py-2.5 px-3 text-right">
+                                    <span class="font-extrabold text-emerald-600 dark:text-emerald-400 text-xs">
+                                        ${remVal} ${c.currency_code}
+                                    </span>
+                                </td>
+                                <td class="py-2.5 px-3 text-right text-slate-400 whitespace-nowrap text-[11px]">
+                                    ${c.last_tx_date || debtor.last_tx_date || '-'}
+                                </td>
+                                <td class="py-2.5 px-2 text-right">
+                                    <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 dark:text-slate-600"></i>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+            }
+
+            // 5. Son Yapılan İşlemler (Küçük, sade ve tarih sıralı)
+            let recentHtml = '';
+            const recentList = (d.recent_transactions || []).slice(0, 6);
+            for (const tx of recentList) {
+                const isDebt = tx.is_debt;
+                recentHtml += `
+                    <tr class="border-b border-slate-100 dark:border-slate-700/60 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/20 transition">
+                        <td class="py-2.5 px-2.5 text-slate-400 font-medium whitespace-nowrap text-[11px]">${tx.tx_date}</td>
+                        <td class="py-2.5 px-2.5 font-semibold text-slate-800 dark:text-white cursor-pointer hover:text-emerald-600 transition truncate max-w-[120px]" onclick="viewPersonDetails(${tx.person_id})">
+                            ${tx.person_name}
+                        </td>
+                        <td class="py-2.5 px-2">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isDebt ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300' : 'bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300'}">
+                                ${isDebt ? 'Borç' : 'Tahsilat'}
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-2.5 text-right font-bold whitespace-nowrap ${isDebt ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}">
+                            ${isDebt ? '+' : '-'}${parseFloat(tx.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${tx.currency_code}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            document.getElementById('content-container').innerHTML = `
+                <!-- 1. ÜST ÖZET KARTLARI -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Aktif Borçlu Kişi/Firma -->
+                    <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-sm flex flex-col justify-between cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition" onclick="navigate('debtors')">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-slate-400">Aktif Borçlu Kişi / Firma</span>
+                            <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm font-bold">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-extrabold text-slate-900 dark:text-white">
+                                ${d.active_debts_count} <span class="text-sm font-medium text-slate-400">Kişi / Firma</span>
+                            </div>
+                            <span class="text-[11px] text-slate-400 block mt-1">Borcu devam eden cari hesaplar</span>
+                        </div>
+                    </div>
+
+                    <!-- Toplam Alacaklarım (Dövizler Ayrı Ayrı) -->
+                    <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-slate-400">Toplam Alacaklarım</span>
+                            <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-bold">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            ${remainingSummaryHtml}
+                        </div>
+                    </div>
+
+                    <!-- Tahsil Edilen Toplam Tutarlar -->
+                    <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-slate-400">Tahsil Edilen Toplamlar</span>
+                            <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm font-bold">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            ${receivedSummaryHtml}
+                        </div>
+                    </div>
+
+                    <!-- Bekleyen Bağlantı İşlemleri -->
+                    <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-sm flex flex-col justify-between cursor-pointer hover:border-purple-300 dark:hover:border-purple-600 transition" onclick="navigate('contracts')">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-slate-400">Bekleyen Bağlantı İşlemleri</span>
+                            <div class="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-sm font-bold">
+                                <i class="fa-solid fa-handshake"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-extrabold text-purple-600 dark:text-purple-400">
+                                ${d.contract_stats ? d.contract_stats.active_contracts : 0} <span class="text-sm font-medium text-slate-400">İşlem</span>
+                            </div>
+                            <span class="text-[11px] text-slate-400 block mt-1">Devam eden döviz bağlantıları</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. DÖVİZ BAKİYELERİ (USD, EUR, GBP, TRY) -->
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                            <i class="fa-solid fa-coins text-emerald-600"></i> Döviz Bakiyeleri
+                        </h3>
+                        <span class="text-[11px] text-slate-400">Para birimi bazında verilen, tahsil edilen ve net kalan</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        ${currencyCardsHtml}
+                    </div>
+                </div>
+
+                <!-- 3. HIZLI İŞLEMLER (Dört Belirgin İşlem Butonu) -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-amber-500"></i> Hızlı İşlemler
+                    </h3>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                        <!-- Yeni Kişi / Firma -->
+                        <button onclick="openNewPersonModal()" class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-slate-400 dark:hover:border-slate-500 shadow-sm hover:shadow transition text-left flex items-center gap-3.5 group">
+                            <div class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-700/70 text-slate-700 dark:text-slate-200 flex items-center justify-center text-lg group-hover:scale-105 transition">
+                                <i class="fa-solid fa-user-plus"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-emerald-600 transition">Yeni Kişi / Firma</div>
+                                <div class="text-[11px] text-slate-400">Yeni cari kart aç</div>
+                            </div>
+                        </button>
+
+                        <!-- Borç Ver -->
+                        <button onclick="openGiveDebtModal()" class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-amber-400 dark:hover:border-amber-500 shadow-sm hover:shadow transition text-left flex items-center gap-3.5 group">
+                            <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg group-hover:scale-105 transition">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-amber-600 transition">Borç Ver</div>
+                                <div class="text-[11px] text-slate-400">Yeni borç kaydı gir</div>
+                            </div>
+                        </button>
+
+                        <!-- Ödeme Al -->
+                        <button onclick="openReceivePaymentModal()" class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm hover:shadow transition text-left flex items-center gap-3.5 group">
+                            <div class="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg group-hover:scale-105 transition">
+                                <i class="fa-solid fa-circle-arrow-down"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-blue-600 transition">Ödeme Al</div>
+                                <div class="text-[11px] text-slate-400">Tahsilat / kısmi ödeme</div>
+                            </div>
+                        </button>
+
+                        <!-- Bağlantı Oluştur -->
+                        <button onclick="openCreateContractModal()" class="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-purple-400 dark:hover:border-purple-500 shadow-sm hover:shadow transition text-left flex items-center gap-3.5 group">
+                            <div class="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-lg group-hover:scale-105 transition">
+                                <i class="fa-solid fa-handshake"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-purple-600 transition">Bağlantı Oluştur</div>
+                                <div class="text-[11px] text-slate-400">Döviz satış sözleşmesi</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4. AKTİF BORÇLAR & 5. SON İŞLEMLER (Dengeli Alt Bölüm) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Aktif Borçlar Listesi (7 Kolon) -->
+                    <div class="lg:col-span-7 p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-sm space-y-3 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                        <i class="fa-solid fa-clock text-emerald-600"></i> Aktif Borçlar
+                                    </h3>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300">
+                                        ${activeDebtCount} Kayıt
+                                    </span>
+                                </div>
+                                <button onclick="navigate('debtors')" class="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-semibold flex items-center gap-1">
+                                    Tüm borçluları gör <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="text-[10px] font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-700 uppercase">
+                                            <th class="pb-2 px-3">Kişi / Firma</th>
+                                            <th class="pb-2 px-3">Döviz</th>
+                                            <th class="pb-2 px-3 text-right">Kalan Borç</th>
+                                            <th class="pb-2 px-3 text-right">Son İşlem</th>
+                                            <th class="pb-2 px-2 text-right"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${activeDebtsRows || '<tr><td colspan="5" class="py-8 text-center text-slate-400 text-xs">Aktif borçlu kaydı bulunmuyor.</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        ${activeDebtCount > 8 ? `
+                            <div class="pt-2 border-t border-slate-100 dark:border-slate-700/40 text-center">
+                                <button onclick="navigate('debtors')" class="text-xs text-slate-500 dark:text-slate-400 hover:text-emerald-600 font-medium">
+                                    +${activeDebtCount - 8} kayıt daha var • Tümünü Listede Gör
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Son Yapılan İşlemler (5 Kolon - Küçük ve Sade) -->
+                    <div class="lg:col-span-5 p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-slate-500"></i> Son İşlemler
+                            </h3>
+                            <button onclick="navigate('debtors')" class="text-xs text-slate-400 hover:text-emerald-600 transition">
+                                Ekstreler
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-[10px] font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-700 uppercase">
+                                        <th class="pb-2 px-2.5">Tarih</th>
+                                        <th class="pb-2 px-2.5">Kişi</th>
+                                        <th class="pb-2 px-2">Tür</th>
+                                        <th class="pb-2 px-2.5 text-right">Tutar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${recentHtml || '<tr><td colspan="4" class="py-8 text-center text-slate-400 text-xs">Henüz işlem yapılmadı.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ----------------- 2. BORÇLU LİSTESİ & ARŞİV -----------------
+        async function renderDebtorsList(statusFilter = 'ALL', search = '') {
+            const res = await fetch(`${API_BASE}/api/debtors?status=${statusFilter}&search=${encodeURIComponent(search)}`);
+            const json = await res.json();
+            const debtors = json.data;
+
+            let rows = '';
+            for (const d of debtors) {
+                let currencyRows = '';
+                if (!d.currencies || d.currencies.length === 0) {
+                    currencyRows = '<span class="text-xs text-slate-400">İşlem kaydı yok</span>';
+                } else {
+                    currencyRows = d.currencies.map(c => `
+                        <div class="flex items-center gap-3 py-1 border-b border-slate-100 dark:border-slate-700/40 last:border-0 text-xs">
+                            <span class="w-12 font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-center">${c.currency_code}</span>
+                            <span class="text-slate-500">Verilen: <strong>${parseFloat(c.total_given).toLocaleString('tr-TR')}</strong></span>
+                            <span class="text-blue-600">Ödenen: <strong>${parseFloat(c.total_paid).toLocaleString('tr-TR')}</strong></span>
+                            <span class="font-bold ${c.remaining > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}">
+                                Kalan: ${parseFloat(c.remaining).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.currency_code}
+                            </span>
+                        </div>
+                    `).join('');
+                }
+
+                const isClosed = (d.status === 'Kapandı');
+                rows += `
+                    <tr class="border-b border-slate-100 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-700/20 text-xs transition">
+                        <td class="py-4 px-4">
+                            <div class="font-bold text-slate-900 dark:text-white text-sm cursor-pointer hover:text-emerald-600 transition" onclick="viewPersonDetails(${d.id})">
+                                ${d.name}
+                            </div>
+                            <span class="text-slate-400 text-[11px] block">${d.phone || 'Telefon belirtilmemiş'} • ${d.description || 'Not yok'}</span>
+                        </td>
+                        <td class="py-4 px-4">${currencyRows}</td>
+                        <td class="py-4 px-4 text-slate-400 font-medium">${d.last_tx_date || '-'}</td>
+                        <td class="py-4 px-4 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${isClosed ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' : 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'}">
+                                <i class="fa-solid ${isClosed ? 'fa-circle-check mr-1' : 'fa-hourglass-half mr-1'}"></i>${d.status}
+                            </span>
+                        </td>
+                        <td class="py-4 px-4 text-right space-x-1 whitespace-nowrap">
+                            ${isClosed ? `
+                                <button onclick="viewPersonDetails(${d.id})" title="Detay ve Ekstre Gör" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-lg font-semibold transition text-xs">
+                                    Detay <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                                </button>
+                                <button onclick="openDeleteClosedModal(${d.id}, '${d.name.replace(/'/g, "\\'")}')" title="Kapanan Borç Kaydını Sil" class="px-2.5 py-1.5 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 rounded-lg font-semibold transition text-xs">
+                                    <i class="fa-solid fa-trash-can mr-1"></i> Sil
+                                </button>
+                            ` : `
+                                <button onclick="openGiveDebtModal(${d.id})" title="Borç Ver" class="px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 rounded-lg font-semibold transition text-xs">
+                                    <i class="fa-solid fa-plus mr-1"></i> Borç
+                                </button>
+                                <button onclick="openReceivePaymentModal(${d.id})" title="Ödeme Al" class="px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-lg font-semibold transition text-xs">
+                                    <i class="fa-solid fa-arrow-down mr-1"></i> Ödeme
+                                </button>
+                                <button onclick="viewPersonDetails(${d.id})" title="Detay ve Ekstre Gör" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-lg font-semibold transition text-xs">
+                                    Detay <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                                </button>
+                            `}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            document.getElementById('content-container').innerHTML = `
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-5">
+                    <!-- ÜST FİLTRE VE ARAMA -->
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-2">
+                            <button onclick="renderDebtorsList('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ALL' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                                Tümü
+                            </button>
+                            <button onclick="renderDebtorsList('ACTIVE')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ACTIVE' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                                Aktif Borçlar
+                            </button>
+                            <button onclick="renderDebtorsList('CLOSED')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'CLOSED' ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                                Kapananlar (Arşiv)
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-3 flex-1 max-w-md justify-end">
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                                <input type="text" oninput="renderDebtorsList('${statusFilter}', this.value)" value="${search}" placeholder="Kişi veya firma adıyla ara..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-xs focus:outline-emerald-500">
+                            </div>
+                            <button onclick="openNewPersonModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 shrink-0 shadow-sm transition">
+                                <i class="fa-solid fa-user-plus text-xs"></i>
+                                <span>Yeni Kişi / Firma</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TABLO -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-[11px] font-semibold text-slate-400 border-b border-slate-200 dark:border-slate-700 uppercase bg-slate-50 dark:bg-slate-700/40">
+                                    <th class="py-3 px-4">Kişi / Firma</th>
+                                    <th class="py-3 px-4">Döviz Bazlı Borç & Ödeme Durumu</th>
+                                    <th class="py-3 px-4">Son İşlem</th>
+                                    <th class="py-3 px-4 text-center">Durum</th>
+                                    <th class="py-3 px-4 text-right">Hızlı İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows || '<tr><td colspan="5" class="p-12 text-center text-slate-400 text-xs">Aradığınız kriterde kayıt bulunamadı.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ----------------- 3. KİŞİ DETAY & İŞLEM GEÇMİŞİ SAYFASI -----------------
+        async function viewPersonDetails(personId) {
+            const container = document.getElementById('content-container');
+            container.innerHTML = '<div class="flex items-center justify-center p-16 text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></div>';
+
+            const res = await fetch(`${API_BASE}/api/person/${personId}`);
+            const json = await res.json();
+            if (!json.success) {
+                alert("Kişi bulunamadı");
+                navigate('debtors');
+                return;
+            }
+            const p = json.data;
+
+            let balancesCards = '';
+            for (const [curr, b] of Object.entries(p.currency_balances)) {
+                balancesCards += `
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700">${curr}</span>
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded ${b.is_closed ? 'bg-slate-100 dark:bg-slate-700 text-slate-500' : 'bg-emerald-100 text-emerald-700'}">${b.status}</span>
+                        </div>
+                        <div class="text-lg font-bold ${b.remaining > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}">
+                            Kalan: ${parseFloat(b.remaining).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${curr}
+                        </div>
+                        <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 text-[11px] flex justify-between text-slate-500">
+                            <span>Verilen: <strong>${parseFloat(b.total_given).toLocaleString('tr-TR')}</strong></span>
+                            <span>Ödenen: <strong>${parseFloat(b.total_paid).toLocaleString('tr-TR')}</strong></span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let historyRows = '';
+            for (const h of p.history) {
+                const isDebt = (h.tx_type === 'DEBT_GIVEN');
+                historyRows += `
+                    <tr class="border-b border-slate-100 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-700/20 text-xs">
+                        <td class="py-3 px-3 text-slate-500 font-medium">${h.tx_date}</td>
+                        <td class="py-3 px-3">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${isDebt ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300'}">
+                                <i class="fa-solid ${isDebt ? 'fa-arrow-up' : 'fa-arrow-down'} mr-1"></i>${h.type_label}
+                            </span>
+                        </td>
+                        <td class="py-3 px-3 text-slate-700 dark:text-slate-200">${h.description || '-'}</td>
+                        <td class="py-3 px-3 text-right font-bold ${isDebt ? 'text-amber-600' : 'text-blue-600'}">
+                            ${isDebt ? '+' : '-'}${parseFloat(h.amount).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${h.currency_code}
+                        </td>
+                        <td class="py-3 px-3 text-right font-bold text-slate-900 dark:text-white">
+                            ${parseFloat(h.running_balance).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${h.currency_code}
+                        </td>
+                        <td class="py-3 px-3 text-right text-slate-400">
+                            ${h.exchange_rate ? parseFloat(h.exchange_rate).toFixed(2) + ' ₺' : '-'}
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            <button onclick="cancelTransaction(${h.tx_id}, ${personId})" title="İşlemi İptal Et" class="text-rose-500 hover:text-rose-700 p-1">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex items-center justify-between shadow-sm">
+                        <div>
+                            <button onclick="navigate('debtors')" class="text-xs text-emerald-600 hover:underline mb-2 flex items-center gap-1 font-semibold">
+                                <i class="fa-solid fa-arrow-left"></i> Borçlu Listesine Geri Dön
+                            </button>
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                                ${p.name}
+                                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full ${p.has_active_debt ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">
+                                    ${p.overall_status}
+                                </span>
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-1">Tel: ${p.phone || 'Belirtilmemiş'} • Not: ${p.description || 'Yok'} • Kayıt: ${p.created_at ? p.created_at.slice(0, 10) : '-'}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${!p.has_active_debt ? `
+                                <button onclick="openDeleteClosedModal(${p.id}, '${p.name.replace(/'/g, "\\'")}')" class="px-3.5 py-2 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 font-semibold rounded-xl text-xs flex items-center gap-2 transition">
+                                    <i class="fa-solid fa-trash-can"></i> Kapanan Kaydı Sil
+                                </button>
+                            ` : ''}
+                            <button onclick="openGiveDebtModal(${p.id})" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs flex items-center gap-2 shadow-sm transition">
+                                <i class="fa-solid fa-plus"></i> Borç Ver
+                            </button>
+                            <button onclick="openReceivePaymentModal(${p.id})" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-xs flex items-center gap-2 shadow-sm transition">
+                                <i class="fa-solid fa-arrow-down"></i> Ödeme Al
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Güncel Bakiye Durumu (Dövizler Bağımsızdır)</h3>
+                        <div class="grid grid-cols-4 gap-4">
+                            ${balancesCards || '<div class="col-span-4 p-6 text-center text-slate-400 bg-white dark:bg-slate-800 rounded-xl text-xs">Henüz işlem bulunmuyor.</div>'}
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i> Kronolojik İşlem Geçmişi ve Hareketler
+                            </h3>
+                            <button onclick="window.print()" class="text-xs font-semibold px-3 py-1.5 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 transition">
+                                <i class="fa-solid fa-print mr-1"></i> Yazdır
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-[11px] font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-700 uppercase bg-slate-50 dark:bg-slate-700/40">
+                                        <th class="py-2.5 px-3">Tarih</th>
+                                        <th class="py-2.5 px-3">İşlem Türü</th>
+                                        <th class="py-2.5 px-3">Açıklama</th>
+                                        <th class="py-2.5 px-3 text-right">İşlem Tutarı</th>
+                                        <th class="py-2.5 px-3 text-right">Kalan Kümülatif Borç</th>
+                                        <th class="py-2.5 px-3 text-right">Kur</th>
+                                        <th class="py-2.5 px-3 text-center">İptal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${historyRows || '<tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs">Henüz işlem kaydı bulunmuyor.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ----------------- 4. DÖVİZ BAĞLANTI İŞLEMLERİ LİSTESİ & DETAY -----------------
+        async function renderContractsList(statusFilter = 'ALL', search = '') {
+            const res = await fetch(`${API_BASE}/api/contracts?status=${statusFilter}&search=${encodeURIComponent(search)}`);
+            const json = await res.json();
+            const contracts = json.data;
+
+            let rows = '';
+            for (const c of contracts) {
+                const sellAmt = parseFloat(c.sell_amount);
+                const targetAmt = parseFloat(c.total_target_amount);
+                const collected = parseFloat(c.collected_amount);
+                const remaining = parseFloat(c.remaining_amount);
+                const unitPrice = parseFloat(c.unit_price);
+
+                let statusBadge = '';
+                if (c.status === 'COMPLETED') {
+                    statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"><i class="fa-solid fa-circle-check mr-1"></i>Tamamlandı</span>';
+                } else if (c.status === 'PARTIAL') {
+                    statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Kısmi Ödendi</span>';
+                } else {
+                    statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300"><i class="fa-solid fa-hourglass-start mr-1"></i>Bekliyor</span>';
+                }
+
+                rows += `
+                    <tr class="border-b border-slate-100 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-700/20 text-xs transition">
+                        <td class="py-3.5 px-4 font-mono font-bold text-purple-600 dark:text-purple-400">
+                            ${c.contract_number}
+                            <span class="block font-normal text-slate-400 text-[10px]">${c.contract_date}</span>
+                        </td>
+                        <td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white cursor-pointer hover:text-purple-600" onclick="viewContractDetails(${c.id})">
+                            ${c.person_name}
+                            <span class="block font-normal text-slate-400 text-[11px]">${c.description || '-'}</span>
+                        </td>
+                        <td class="py-3.5 px-4 font-bold text-purple-700 dark:text-purple-300">
+                            ${sellAmt.toLocaleString('tr-TR')} ${c.sell_currency}
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-500 font-medium">
+                            ${unitPrice.toFixed(4)} ${c.buy_currency}
+                        </td>
+                        <td class="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                            ${targetAmt.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.buy_currency}
+                        </td>
+                        <td class="py-3.5 px-4 font-semibold text-blue-600 dark:text-blue-400">
+                            ${collected.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.buy_currency}
+                        </td>
+                        <td class="py-3.5 px-4 font-bold ${remaining > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}">
+                            ${remaining.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.buy_currency}
+                        </td>
+                        <td class="py-3.5 px-4 text-center">
+                            ${statusBadge}
+                        </td>
+                        <td class="py-3.5 px-4 text-right space-x-1">
+                            ${c.status !== 'COMPLETED' ? `
+                                <button onclick="openAddContractPaymentModal(${c.id}, '${c.person_name.replace(/'/g, "\\'")}', '${targetAmt}', '${remaining}', '${c.buy_currency}')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-[11px] transition">
+                                    <i class="fa-solid fa-plus mr-1"></i> Ödeme Al
+                                </button>
+                            ` : ''}
+                            <button onclick="viewContractDetails(${c.id})" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-lg font-semibold text-[11px] transition">
+                                Detay <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            document.getElementById('content-container').innerHTML = `
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-5">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-2">
+                            <button onclick="renderContractsList('ALL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'ALL' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                                Tümü
+                            </button>
+                            <button onclick="renderContractsList('PENDING')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'PENDING' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                                Bekleyenler
+                            </button>
+                            <button onclick="renderContractsList('PARTIAL')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'PARTIAL' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                                Kısmi Ödenenler
+                            </button>
+                            <button onclick="renderContractsList('COMPLETED')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold ${statusFilter === 'COMPLETED' ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} transition">
+                                Tamamlananlar
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-3 flex-1 max-w-md">
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                                <input type="text" oninput="renderContractsList('${statusFilter}', this.value)" value="${search}" placeholder="Kişi, sözleşme no veya açıklama ara..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 text-xs focus:outline-purple-500">
+                            </div>
+                            <button onclick="openCreateContractModal()" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 shrink-0 transition">
+                                <i class="fa-solid fa-plus"></i> Yeni Bağlantı
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-[11px] font-semibold text-slate-400 border-b border-slate-200 dark:border-slate-700 uppercase bg-slate-50 dark:bg-slate-700/40">
+                                    <th class="py-3 px-4">Bağlantı No</th>
+                                    <th class="py-3 px-4">Kişi / Firma</th>
+                                    <th class="py-3 px-4">Satılan Döviz</th>
+                                    <th class="py-3 px-4">Birim Fiyat</th>
+                                    <th class="py-3 px-4">Toplam Karşılık</th>
+                                    <th class="py-3 px-4">Tahsil Edilen</th>
+                                    <th class="py-3 px-4">Kalan Bakiye</th>
+                                    <th class="py-3 px-4 text-center">Durum</th>
+                                    <th class="py-3 px-4 text-right">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows || '<tr><td colspan="9" class="p-12 text-center text-slate-400 text-xs">Kayıtlı döviz bağlantısı bulunamadı.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function viewContractDetails(contractId) {
+            const container = document.getElementById('content-container');
+            container.innerHTML = '<div class="flex items-center justify-center p-16 text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></div>';
+
+            const res = await fetch(`${API_BASE}/api/contract/${contractId}`);
+            const json = await res.json();
+            if (!json.success) {
+                alert("Bağlantı bulunamadı");
+                navigate('contracts');
+                return;
+            }
+            const c = json.data;
+
+            const sellAmt = parseFloat(c.sell_amount);
+            const targetAmt = parseFloat(c.total_target_amount);
+            const collected = parseFloat(c.collected_amount);
+            const remaining = parseFloat(c.remaining_amount);
+            const unitPrice = parseFloat(c.unit_price);
+            const percentPaid = targetAmt > 0 ? Math.min(100, Math.round((collected / targetAmt) * 100)) : 0;
+
+            let paymentsRows = '';
+            for (const p of c.payments) {
+                paymentsRows += `
+                    <tr class="border-b border-slate-100 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-700/20 text-xs">
+                        <td class="py-2.5 px-3 font-medium text-slate-500">${p.payment_date}</td>
+                        <td class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-200">${p.description || 'Kısmi Ödeme'}</td>
+                        <td class="py-2.5 px-3 font-mono text-slate-400 text-[11px]">${p.tx_number}</td>
+                        <td class="py-2.5 px-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                            +${parseFloat(p.amount).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${p.currency_code}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex items-center justify-between shadow-sm">
+                        <div>
+                            <button onclick="navigate('contracts')" class="text-xs text-purple-600 hover:underline mb-2 flex items-center gap-1 font-semibold">
+                                <i class="fa-solid fa-arrow-left"></i> Tüm Bağlantılara Geri Dön
+                            </button>
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                                Bağlantı: ${c.contract_number}
+                                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full ${c.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' : 'bg-purple-100 text-purple-800'}">
+                                    ${c.status_label}
+                                </span>
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-1">İlgili Kişi: <strong class="text-slate-700 dark:text-slate-300">${c.person_name}</strong> • Tarih: ${c.contract_date} • ${c.description || 'Açıklama yok'}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${c.status !== 'COMPLETED' ? `
+                                <button onclick="openAddContractPaymentModal(${c.id}, '${c.person_name.replace(/'/g, "\\'")}', '${targetAmt}', '${remaining}', '${c.buy_currency}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs flex items-center gap-2 shadow-sm transition">
+                                    <i class="fa-solid fa-plus"></i> Ödeme Al
+                                </button>
+                            ` : ''}
+                            <button onclick="viewPersonDetails(${c.account_id})" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs flex items-center gap-2 transition">
+                                <i class="fa-solid fa-user"></i> Kişi Detayına Git
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- METRİK KARTLARI -->
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <span class="text-xs font-semibold text-slate-400 block mb-1">Teslim Edilen (Satılan)</span>
+                            <div class="text-xl font-bold text-purple-600 dark:text-purple-400">
+                                ${sellAmt.toLocaleString('tr-TR')} ${c.sell_currency}
+                            </div>
+                            <span class="text-[11px] text-slate-400 mt-1 block">Çıkış işlemi cariye yazıldı</span>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <span class="text-xs font-semibold text-slate-400 block mb-1">Birim Fiyat / Kur</span>
+                            <div class="text-xl font-bold text-slate-900 dark:text-white">
+                                ${unitPrice.toFixed(4)} ${c.buy_currency}
+                            </div>
+                            <span class="text-[11px] text-slate-400 mt-1 block">1 ${c.sell_currency} karşılığı</span>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <span class="text-xs font-semibold text-slate-400 block mb-1">Toplam Alınacak Karşılık</span>
+                            <div class="text-xl font-bold text-slate-900 dark:text-white">
+                                ${targetAmt.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.buy_currency}
+                            </div>
+                            <span class="text-[11px] text-blue-600 mt-1 block">Tahsil edilen: ${collected.toLocaleString('tr-TR')} ${c.buy_currency}</span>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <span class="text-xs font-semibold text-slate-400 block mb-1">Kalan Karşılık Alacağı</span>
+                            <div class="text-xl font-bold ${remaining > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600'}">
+                                ${remaining.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.buy_currency}
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-2 overflow-hidden">
+                                <div class="bg-emerald-500 h-full" style="width: ${percentPaid}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ÖDEME GEÇMİŞİ TABLOSU -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-emerald-600"></i> Parçalı Tahsilat ve Ödeme Geçmişi
+                            </h3>
+                            <span class="text-xs text-slate-400">${c.payments.length} adet ödeme kaydedildi</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-[11px] font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-700 uppercase bg-slate-50 dark:bg-slate-700/40">
+                                        <th class="py-2.5 px-3">Tarih</th>
+                                        <th class="py-2.5 px-3">Açıklama</th>
+                                        <th class="py-2.5 px-3">İşlem Fiş No</th>
+                                        <th class="py-2.5 px-3 text-right">Tahsil Edilen Tutar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${paymentsRows || '<tr><td colspan="4" class="p-8 text-center text-slate-400 text-xs">Henüz bir ödeme tahsil edilmedi.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ----------------- 5. YEDEKLEME & VERİ KURTARMA MERKEZİ EKRANI -----------------
+        async function renderBackupSecurityScreen() {
+            const res = await fetch(`${API_BASE}/api/backup/status`);
+            const json = await res.json();
+            const d = json.data;
+
+            let backupsListHtml = '';
+            for (const b of d.backups) {
+                backupsListHtml += `
+                    <tr class="border-b border-slate-100 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-700/20 text-xs">
+                        <td class="py-3 px-3 font-semibold text-slate-800 dark:text-slate-100 font-mono text-[11px]">${b.filename}</td>
+                        <td class="py-3 px-3 text-slate-500">${b.date}</td>
+                        <td class="py-3 px-3 text-slate-500 font-medium">${b.size}</td>
+                        <td class="py-3 px-3 text-right space-x-2">
+                            <a href="${API_BASE}/api/backup/download-file/${encodeURIComponent(b.filename)}" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-semibold rounded-lg inline-flex items-center gap-1 transition">
+                                <i class="fa-solid fa-download text-[11px]"></i> İndir
+                            </a>
+                            <button onclick="confirmAndRestore('${b.path.replace(/\\/g, '\\\\')}', '${b.filename}')" class="px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-800 dark:text-amber-300 font-semibold rounded-lg inline-flex items-center gap-1 transition">
+                                <i class="fa-solid fa-rotate-left text-[11px]"></i> Bu Yedeğe Geri Dön
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            document.getElementById('content-container').innerHTML = `
+                <div class="space-y-6">
+                    <!-- ÜST DURUM KARTLARI -->
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-semibold text-slate-400">Veritabanı Durumu</span>
+                                <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                            </div>
+                            <div class="text-lg font-bold text-slate-900 dark:text-white">${d.integrity_status}</div>
+                            <span class="text-[11px] text-slate-400 mt-1 block">Boyut: ${d.db_size}</span>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-semibold text-slate-400">Son Başarılı Yedek</span>
+                                <i class="fa-solid fa-clock-rotate-left text-sky-500"></i>
+                            </div>
+                            <div class="text-sm font-bold text-slate-900 dark:text-white">${d.last_backup_date}</div>
+                            <span class="text-[11px] text-emerald-600 mt-1 block">Otomatik günlük koruma aktif</span>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-semibold text-slate-400">Saklanan Yedek Sayısı</span>
+                                <i class="fa-solid fa-boxes-stacked text-indigo-500"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-slate-900 dark:text-white">${d.total_backups_count} Adet</div>
+                            <span class="text-[11px] text-slate-400 mt-1 block">Son 30 günlük arşiv korunur</span>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-semibold text-slate-400">Veri Depolama Tipi</span>
+                                <i class="fa-solid fa-hard-drive text-amber-500"></i>
+                            </div>
+                            <div class="text-sm font-bold text-slate-900 dark:text-white">Kalıcı Kullanıcı Dizini</div>
+                            <span class="text-[10px] text-slate-400 truncate block mt-1" title="${d.db_path}">${d.db_path}</span>
+                        </div>
+                    </div>
+
+                    <!-- EYLEM KARTLARI (YEDEK AL & DIŞA AKTAR & GERİ YÜKLE) -->
+                    <div class="grid grid-cols-3 gap-6">
+                        <!-- Manuel Yedek Al -->
+                        <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white">Anlık Manuel Yedek Oluştur</h3>
+                            <p class="text-xs text-slate-400">Mevcut veritabanının bütünlüğünü bozmadan zaman damgalı bağımsız bir yedek oluşturur.</p>
+                            <button onclick="triggerManualBackup()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs shadow-sm transition">
+                                <i class="fa-solid fa-floppy-disk mr-1"></i> Şimdi Yedek Al
+                            </button>
+                        </div>
+
+                        <!-- USB / Harici Disk ZIP İndir -->
+                        <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-file-zipper"></i>
+                            </div>
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white">USB / Bulut İçin ZIP İndir</h3>
+                            <p class="text-xs text-slate-400">Veritabanını ve metadata özetini tek bir ZIP arşivi olarak bilgisayarınıza veya USB'ye indirir.</p>
+                            <a href="${API_BASE}/api/backup/download-zip" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-xs shadow-sm transition inline-flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-download mr-1"></i> ZIP Yedeğini İndir
+                            </a>
+                        </div>
+
+                        <!-- Harici Dosyadan Geri Yükle -->
+                        <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-upload"></i>
+                            </div>
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white">Yedekten Geri Yükle</h3>
+                            <p class="text-xs text-slate-400">Başka bilgisayardan veya USB'den getirdiğiniz .db dosyasının tam yolunu girerek geri yükleyebilirsiniz.</p>
+                            <button onclick="promptManualFileRestore()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-xl text-xs shadow-sm transition">
+                                <i class="fa-solid fa-rotate-left mr-1"></i> Dosyadan Geri Yükle...
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- MEVCUT YEDEKLER LİSTESİ -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-emerald-600"></i> Mevcut Yedek Dosyaları ve Geri Yükleme Noktaları
+                            </h3>
+                            <span class="text-xs text-slate-400">Otomatik (daily, pre_action) ve manuel yedekler</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-[11px] font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-700 uppercase bg-slate-50 dark:bg-slate-700/40">
+                                        <th class="py-2.5 px-3">Yedek Dosya Adı</th>
+                                        <th class="py-2.5 px-3">Oluşturulma Tarihi</th>
+                                        <th class="py-2.5 px-3">Boyut</th>
+                                        <th class="py-2.5 px-3 text-right">İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${backupsListHtml || '<tr><td colspan="4" class="p-8 text-center text-slate-400 text-xs">Henüz kayıtlı yedek bulunmuyor.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ----------------- YEDEKLEME & GERİ YÜKLEME EYLEMLERİ -----------------
+        async function triggerManualBackup() {
+            const res = await fetch(`${API_BASE}/api/backup/create`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                alert('Yedekleme başarıyla tamamlandı:\n' + data.filename);
+                updateSidebarBackupStatus();
+                renderBackupSecurityScreen();
+            } else {
+                alert('Yedekleme hatası: ' + data.error);
+            }
+        }
+
+        async function confirmAndRestore(filePath, fileName) {
+            const confirmed = confirm(
+                `DİKKAT: "${fileName}" yedeği geri yüklenecektir!\n\n` +
+                `1. İşlem öncesinde mevcut veritabanınızın otomatik güvenlik yedeği alınacaktır.\n` +
+                `2. Yedek dosyasının bütünlüğü doğrulanacak, bir bozulma varsa işlem durdurulacaktır.\n\n` +
+                `Geri yüklemeyi onaylıyor musunuz?`
+            );
+            if (!confirmed) return;
+
+            const res = await fetch(`${API_BASE}/api/backup/restore`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ backup_file: filePath })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`Geri Yükleme Başarılı!\n${data.accounts_count} Kişi/Firma ve ${data.transactions_count} İşlem eksiksiz geri getirildi.`);
+                updateSidebarBackupStatus();
+                navigate('dashboard');
+            } else {
+                alert('Geri yükleme engellendi / hata: ' + data.error);
+            }
+        }
+
+        async function promptManualFileRestore() {
+            const path = prompt("Geri yüklemek istediğiniz yedek (.db veya .zip) dosyasının tam yolunu giriniz:");
+            if (!path || !path.trim()) return;
+            confirmAndRestore(path.trim(), path.trim());
+        }
+
+        // ----------------- FORM GÖNDERİMLERİ -----------------
+        async function submitNewPerson(e) {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('person-name').value,
+                phone: document.getElementById('person-phone').value,
+                description: document.getElementById('person-desc').value
+            };
+            const res = await fetch(`${API_BASE}/api/person/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeModal('modal-person');
+                await loadPersonsCache();
+                viewPersonDetails(data.person_id);
+            } else {
+                alert('Hata: ' + data.error);
+            }
+        }
+
+        async function submitGiveDebt(e) {
+            e.preventDefault();
+            const personId = document.getElementById('debt-person-id').value;
+            const payload = {
+                person_id: personId,
+                amount: document.getElementById('debt-amount').value,
+                currency_code: document.getElementById('debt-currency').value,
+                date: document.getElementById('debt-date').value,
+                exchange_rate: document.getElementById('debt-rate').value || null,
+                description: document.getElementById('debt-desc').value
+            };
+            const res = await fetch(`${API_BASE}/api/debt/give`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeModal('modal-give-debt');
+                updateSidebarBackupStatus();
+                if (currentTab === 'dashboard') renderDashboard();
+                else if (currentTab === 'debtors') renderDebtorsList();
+                else viewPersonDetails(personId);
+            } else {
+                alert('Hata: ' + data.error);
+            }
+        }
+
+        async function submitReceivePayment(e) {
+            e.preventDefault();
+            const personId = document.getElementById('pay-person-id').value;
+            const payload = {
+                person_id: personId,
+                amount: document.getElementById('pay-amount').value,
+                currency_code: document.getElementById('pay-currency').value,
+                date: document.getElementById('pay-date').value,
+                exchange_rate: document.getElementById('pay-rate').value || null,
+                description: document.getElementById('pay-desc').value
+            };
+            const res = await fetch(`${API_BASE}/api/payment/receive`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeModal('modal-receive-payment');
+                updateSidebarBackupStatus();
+                if (currentTab === 'dashboard') renderDashboard();
+                else if (currentTab === 'debtors') renderDebtorsList();
+                else viewPersonDetails(personId);
+            } else {
+                alert('Hata: ' + data.error);
+            }
+        }
+
+        async function submitCreateContract(e) {
+            e.preventDefault();
+            const personId = document.getElementById('contract-person-id').value;
+            const sellAmt = document.getElementById('contract-sell-amount').value;
+            const sellCurr = document.getElementById('contract-sell-currency').value;
+            const targetAmt = document.getElementById('contract-target-amount').value;
+            const buyCurr = document.getElementById('contract-buy-currency').value;
+            const unitPrice = document.getElementById('contract-unit-price').value || null;
+            const date = document.getElementById('contract-date').value;
+            const desc = document.getElementById('contract-desc').value;
+
+            const payload = {
+                person_id: personId,
+                sell_currency: sellCurr,
+                sell_amount: sellAmt,
+                buy_currency: buyCurr,
+                total_target_amount: targetAmt,
+                unit_price: unitPrice,
+                contract_date: date,
+                description: desc
+            };
+
+            const res = await fetch(`${API_BASE}/api/contract/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeModal('modal-create-contract');
+                updateSidebarBackupStatus();
+                viewContractDetails(data.contract_id);
+            } else {
+                alert('Bağlantı oluşturulamadı: ' + data.error);
+            }
+        }
+
+        async function submitContractPayment(e) {
+            e.preventDefault();
+            const contractId = document.getElementById('cpay-contract-id').value;
+            const amount = document.getElementById('cpay-amount').value;
+            const date = document.getElementById('cpay-date').value;
+            const desc = document.getElementById('cpay-desc').value;
+
+            const payload = {
+                contract_id: contractId,
+                amount: amount,
+                payment_date: date,
+                description: desc
+            };
+
+            const res = await fetch(`${API_BASE}/api/contract/payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeModal('modal-contract-payment');
+                updateSidebarBackupStatus();
+                viewContractDetails(contractId);
+            } else {
+                alert('Ödeme kaydedilemedi: ' + data.error);
+            }
+        }
+
+        async function cancelTransaction(txId, personId) {
+            if (!confirm('Bu işlemi iptal etmek istediğinize emin misiniz? Bakiye otomatik güncellenecektir.')) return;
+            const res = await fetch(`${API_BASE}/api/transaction/cancel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ transaction_id: txId, reason: 'Kullanıcı onayıyla iptal edildi' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                updateSidebarBackupStatus();
+                viewPersonDetails(personId);
+            } else {
+                alert('İptal hatası: ' + data.error);
+            }
+        }
+
+        function openDeleteClosedModal(personId, personName) {
+            document.getElementById('delete-closed-person-id').value = personId;
+            document.getElementById('delete-closed-target-name').textContent = `Seçilen Kayıt: ${personName}`;
+            openModal('modal-delete-closed');
+        }
+
+        async function executeDeleteClosedRecord() {
+            const personId = document.getElementById('delete-closed-person-id').value;
+            if (!personId) return;
+
+            const btn = document.getElementById('btn-confirm-delete-closed');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Siliniyor...';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/debtors/delete-closed`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ person_id: parseInt(personId) })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeModal('modal-delete-closed');
+                    updateSidebarBackupStatus();
+                    await loadPersonsCache();
+                    alert(data.message || 'Kapanan borç kaydı ve geçmişi başarıyla silindi.');
+                    if (currentTab === 'debtors') {
+                        renderDebtorsList('CLOSED');
+                    } else if (currentTab === 'dashboard') {
+                        renderDashboard();
+                    } else {
+                        navigate('debtors', 'CLOSED');
+                    }
+                } else {
+                    alert('Silme işlemi engellendi: ' + data.error);
+                }
+            } catch (err) {
+                alert('İşlem sırasında hata oluştu: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        async function createBackup() {
+            triggerManualBackup();
+        }
+    </script>
+</body>
+</html>

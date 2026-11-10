@@ -51,10 +51,21 @@ def get_user_data_dir() -> Path:
         test_file.unlink()
         return candidate
     except Exception:
+        # Vercel / AWS Lambda Serverless ortamı kontrolü (Sadece /tmp yazılabilir)
+        if "VERCEL" in os.environ or "AWS_LAMBDA_FUNCTION_NAME" in os.environ:
+            tmp_dir = Path("/tmp") / APP_NAME
+            tmp_dir.mkdir(parents=True, exist_ok=True)
+            return tmp_dir
+
         # Sandbox kısıtı varsa, workspace içindeki güvenli kalıcı storage dizinine geç
-        fallback = Path(__file__).resolve().parent.parent / "persistent_data"
-        fallback.mkdir(parents=True, exist_ok=True)
-        return fallback
+        try:
+            fallback = Path(__file__).resolve().parent.parent / "persistent_data"
+            fallback.mkdir(parents=True, exist_ok=True)
+            return fallback
+        except Exception:
+            tmp_dir = Path("/tmp") / APP_NAME
+            tmp_dir.mkdir(parents=True, exist_ok=True)
+            return tmp_dir
 
 def get_database_path() -> Path:
     """Kalıcı veritabanı dosyasının mutlak yolunu döner."""

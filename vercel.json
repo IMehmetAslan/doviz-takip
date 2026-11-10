@@ -1,28 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/manifest.json",
-      "destination": "/src/web/manifest.json"
-    },
-    {
-      "source": "/service-worker.js",
-      "destination": "/src/web/service-worker.js"
-    },
-    {
-      "source": "/icon.svg",
-      "destination": "/src/web/icon.svg"
-    },
-    {
       "source": "/api/(.*)",
       "destination": "/api/index.py"
-    },
-    {
-      "source": "/",
-      "destination": "/src/web/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/src/web/$1"
     }
   ]
 }
