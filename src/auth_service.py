@@ -149,7 +149,7 @@ class AuthService:
 
         # Güvenli 64 karakter oturum token'ı üret
         token = secrets.token_hex(32)
-        expires_at = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
+        expires_at = (datetime.utcnow() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
 
         cur.execute(
             """
@@ -177,16 +177,15 @@ class AuthService:
             return None
 
         cur = self.conn.cursor()
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         cur.execute(
             """
             SELECT s.token, s.expires_at, u.id as user_id, u.username, u.full_name, u.role
             FROM app_sessions s
             JOIN app_users u ON s.user_id = u.id
-            WHERE s.token = ? AND s.expires_at > ? AND u.active = 1
+            WHERE s.token = ? AND s.expires_at > CURRENT_TIMESTAMP AND (u.active = 1 OR u.active IS TRUE)
             """,
-            (token, now_str)
+            (token,)
         )
         row = cur.fetchone()
         if not row:

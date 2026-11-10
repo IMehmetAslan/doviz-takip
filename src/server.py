@@ -90,25 +90,44 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
 
     def _get_clean_path(self):
         """Vercel serverless ve yerel ortamlar için temiz API yolunu döner."""
-        # 1. Vercel orijinal yol başlıkları
-        for h in ["x-vercel-original-path", "x-real-path", "x-forwarded-uri", "x-matched-path"]:
-            val = self.headers.get(h)
-            if val and "/api/index.py" not in val:
-                p = urllib.parse.urlparse(val).path
-                if p.startswith("/api/"):
-                    return p
-
-        # 2. Query param __path
-        parsed = urllib.parse.urlparse(self.path)
+        raw = self.path
+        parsed = urllib.parse.urlparse(raw)
         qs = urllib.parse.parse_qs(parsed.query)
+
+        candidate = None
+        # 1. Query param __path (Vercel rewrite)
         if "__path" in qs:
-            return "/api/" + qs["__path"][0].lstrip("/")
+            candidate = qs["__path"][0]
 
-        # 3. Path doğrudan index.py içeriyorsa temizle
-        if "/api/index.py/" in parsed.path:
-            return "/api/" + parsed.path.split("/api/index.py/")[1]
+        # 2. Vercel orijinal yol başlıkları
+        if not candidate:
+            for h in ["x-vercel-original-path", "x-real-path", "x-forwarded-uri", "x-matched-path"]:
+                val = self.headers.get(h)
+                if val and "/api/index.py" not in val:
+                    candidate = urllib.parse.urlparse(val).path
+                    break
 
-        return parsed.path
+        # 3. Path doğrudan index.py içeriyorsa
+        if not candidate:
+            p = parsed.path
+            if "/api/index.py" in p:
+                candidate = p.split("/api/index.py")[-1]
+            else:
+                candidate = p
+
+        if not candidate:
+            candidate = "/"
+
+        candidate = candidate.strip()
+        # Statik dosyalar
+        if candidate in ["/", "/index.html", "/manifest.json", "/service-worker.js", "/icon.svg", "/favicon.ico"]:
+            return candidate
+
+        # API endpoint'i olarak normalize et (Her zaman /api/... döner)
+        clean = candidate.lstrip("/")
+        if clean.startswith("api/"):
+            clean = clean[4:]
+        return "/api/" + clean.rstrip("/")
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -116,6 +135,29 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
         query = urllib.parse.parse_qs(parsed.query)
 
         # Statik UI ve PWA dosyaları (Herkese açık)
+        if path == "/api/health":
+            db_type = "postgres" if is_postgres_enabled() else "sqlite"
+            db_ok = False
+            err_msg = ""
+            try:
+                test_conn = self._get_conn()
+                test_cur = test_conn.cursor()
+                test_cur.execute("SELECT 1;")
+                test_conn.close()
+                db_ok = True
+            except Exception as e:
+                err_msg = str(e)
+
+            self._send_json({
+                "status": "ok",
+                "db_type": db_type,
+                "db_connected": db_ok,
+                "db_error": err_msg,
+                "has_db_url": bool(get_database_url()),
+                "vercel_env": os.environ.get("VERCEL", "0")
+            })
+            return
+
         if path == "/" or path == "/index.html":
             self._serve_file("src/web/index.html", "text/html")
             return

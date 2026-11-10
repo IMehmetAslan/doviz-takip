@@ -574,13 +574,22 @@
         let personsCache = [];
 
         // ----------------- OTURUM VE FETCH GÜVENLİK SARMALAYICISI -----------------
+        let _inMemoryToken = '';
+
         function getStoredToken() {
-            return localStorage.getItem('doviz_session_token') || '';
+            try {
+                const tok = localStorage.getItem('doviz_session_token');
+                if (tok) return tok;
+            } catch (e) {}
+            return _inMemoryToken || '';
         }
 
         function setStoredToken(token) {
-            if (token) localStorage.setItem('doviz_session_token', token);
-            else localStorage.removeItem('doviz_session_token');
+            _inMemoryToken = token || '';
+            try {
+                if (token) localStorage.setItem('doviz_session_token', token);
+                else localStorage.removeItem('doviz_session_token');
+            } catch (e) {}
         }
 
         // Native fetch interceptor: Tüm API isteklerine güvenli oturum token'ını otomatik ekler
@@ -588,6 +597,7 @@
         window.fetch = async function(resource, init = {}) {
             init = init || {};
             init.headers = init.headers || {};
+            init.credentials = init.credentials || 'same-origin';
 
             const urlStr = typeof resource === 'string' ? resource : (resource.url || '');
             const token = getStoredToken();
@@ -606,9 +616,12 @@
 
             try {
                 const response = await _nativeFetch(resource, init);
-                if (response.status === 401 && !urlStr.includes('/api/auth/login')) {
-                    setStoredToken('');
-                    showLoginOverlay();
+                if (response.status === 401) {
+                    const isAuth = urlStr.includes('/auth/login') || urlStr.includes('/auth/me');
+                    if (!isAuth) {
+                        setStoredToken('');
+                        showLoginOverlay();
+                    }
                 }
                 return response;
             } catch (err) {
@@ -651,29 +664,45 @@
             }
         }
 
+        function applyUserDataToUI(user) {
+            if (!user) return;
+            const uname = user.username || 'admin';
+            const uBadge = document.getElementById('header-username');
+            const uSide = document.getElementById('sb-username-text');
+            if (uBadge) uBadge.textContent = uname;
+            if (uSide) uSide.textContent = uname;
+
+            const today = new Date().toISOString().split('T')[0];
+            const dDate = document.getElementById('debt-date');
+            const pDate = document.getElementById('pay-date');
+            if (dDate) dDate.value = today;
+            if (pDate) pDate.value = today;
+        }
+
         async function checkAuthAndInit() {
+            const token = getStoredToken();
+            if (!token) {
+                showLoginOverlay();
+                return;
+            }
+
             try {
                 const res = await fetch(`${API_BASE}/api/auth/me`);
-                const json = await res.json();
-                if (json.success && json.user) {
-                    hideLoginOverlay();
-                    const uname = json.user.username;
-                    const uBadge = document.getElementById('header-username');
-                    const uSide = document.getElementById('sb-username-text');
-                    if (uBadge) uBadge.textContent = uname;
-                    if (uSide) uSide.textContent = uname;
-                    
-                    const today = new Date().toISOString().split('T')[0];
-                    document.getElementById('debt-date').value = today;
-                    document.getElementById('pay-date').value = today;
-                    loadPersonsCache();
-                    updateSidebarBackupStatus();
-                    navigate('dashboard');
-                    return;
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.success && json.user) {
+                        hideLoginOverlay();
+                        applyUserDataToUI(json.user);
+                        loadPersonsCache();
+                        updateSidebarBackupStatus();
+                        navigate('dashboard');
+                        return;
+                    }
                 }
             } catch (e) {
                 console.error("Auth kontrol hatası:", e);
             }
+            setStoredToken('');
             showLoginOverlay();
         }
 
@@ -699,7 +728,11 @@
                 if (data.success && token) {
                     setStoredToken(token);
                     hideLoginOverlay();
-                    checkAuthAndInit();
+                    const user = data.user || (data.data && data.data.user) || { username: username };
+                    applyUserDataToUI(user);
+                    loadPersonsCache();
+                    updateSidebarBackupStatus();
+                    navigate('dashboard');
                 } else {
                     errBox.textContent = data.error || 'Kullanıcı adı veya şifre hatalı.';
                     errBox.classList.remove('hidden');

@@ -211,12 +211,12 @@ def get_postgres_connection(db_url: str) -> DBConnectionWrapper:
     except ImportError:
         pass
 
-    # 2. pg8000 (Pure Python) dene
+    # 2. pg8000 (Pure Python DB-API 2.0) dene
     try:
-        import pg8000.native
+        import pg8000.dbapi
         import urllib.parse
         parsed = urllib.parse.urlparse(db_url)
-        conn = pg8000.native.Connection(
+        conn = pg8000.dbapi.connect(
             user=parsed.username,
             password=parsed.password,
             host=parsed.hostname,
