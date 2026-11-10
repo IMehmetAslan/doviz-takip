@@ -183,7 +183,7 @@ class AuthService:
             SELECT s.token, s.expires_at, u.id as user_id, u.username, u.full_name, u.role
             FROM app_sessions s
             JOIN app_users u ON s.user_id = u.id
-            WHERE s.token = ? AND s.expires_at > CURRENT_TIMESTAMP AND (u.active = 1 OR u.active IS TRUE)
+            WHERE s.token = ? AND s.expires_at > CURRENT_TIMESTAMP AND u.active = 1
             """,
             (token,)
         )

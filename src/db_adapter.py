@@ -206,29 +206,29 @@ def get_postgres_connection(db_url: str) -> DBConnectionWrapper:
         if "sslmode=" not in url:
             sep = "&" if "?" in url else "?"
             url = f"{url}{sep}sslmode=require"
-        conn = psycopg2.connect(url)
+        conn = psycopg2.connect(url, connect_timeout=15)
         return DBConnectionWrapper(conn, is_postgres=True)
-    except ImportError:
+    except Exception:
         pass
 
     # 2. pg8000 (Pure Python DB-API 2.0) dene
     try:
+        import ssl
         import pg8000.dbapi
         import urllib.parse
         parsed = urllib.parse.urlparse(db_url)
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
         conn = pg8000.dbapi.connect(
-            user=parsed.username,
-            password=parsed.password,
+            user=urllib.parse.unquote(parsed.username) if parsed.username else None,
+            password=urllib.parse.unquote(parsed.password) if parsed.password else None,
             host=parsed.hostname,
             port=parsed.port or 5432,
             database=parsed.path.lstrip("/"),
-            ssl_context=True
+            ssl_context=ssl_context,
+            timeout=15
         )
         return DBConnectionWrapper(conn, is_postgres=True)
-    except ImportError:
-        pass
-
-    raise ImportError(
-        "PostgreSQL bağlantısı için 'psycopg2-binary' veya 'pg8000' kütüphanesi kurulu olmalıdır.\n"
-        "Kurulum için: pip install psycopg2-binary"
-    )
+    except Exception as e:
+        raise ConnectionError(f"PostgreSQL bağlantısı kurulamadı: {e}")

@@ -98,9 +98,16 @@ def load_env_file():
 
 load_env_file()
 
+DEFAULT_SUPABASE_DATABASE_URL = "postgresql://postgres.shjrjlatdyjwsuvwpvjf:Ma21010509056@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?sslmode=require"
+
 def get_database_url() -> str:
-    """Supabase / PostgreSQL bağlantı URL'sini döner (tanımlı değilse boş döner)."""
-    return os.environ.get("DATABASE_URL", "").strip()
+    """Supabase / PostgreSQL bağlantı URL'sini döner (Vercel ortamında otomatik tanımlıdır)."""
+    env_url = os.environ.get("DATABASE_URL", "").strip()
+    if env_url:
+        return env_url
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        return DEFAULT_SUPABASE_DATABASE_URL
+    return ""
 
 def is_postgres_enabled() -> bool:
     """PostgreSQL / Supabase modunun aktif olup olmadığını belirtir."""

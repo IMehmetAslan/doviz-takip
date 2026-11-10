@@ -281,13 +281,13 @@ class ReportingEngine:
                 # Henüz işlem yapılmamış kişi
                 has_active = False
                 status = "İşlem Yok"
-                last_date = acc["created_at"][:10] if acc["created_at"] else "-"
+                last_date = str(acc["created_at"])[:10] if acc["created_at"] else "-"
             else:
                 has_active = any(not c["is_closed"] for c in currencies)
                 status = "Aktif" if has_active else "Kapandı"
                 # En son işlem tarihi
                 dates = [c["last_tx_date"] for c in currencies if c["last_tx_date"]]
-                last_date = max(dates) if dates else "-"
+                last_date = str(max(dates))[:10] if dates else "-"
 
             acc["currencies"] = currencies
             acc["status"] = status
