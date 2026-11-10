@@ -14,10 +14,14 @@
     <link rel="icon" type="image/svg+xml" href="/icon.svg">
     <link rel="apple-touch-icon" href="/icon.svg">
 
+    <!-- Fonts & Icons Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -39,7 +43,6 @@
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -575,6 +578,25 @@
 
         // ----------------- OTURUM VE FETCH GÜVENLİK SARMALAYICISI -----------------
         let _inMemoryToken = '';
+        const _clientApiCache = new Map();
+
+        async function fetchWithCache(url, ttlMs = 15000) {
+            const now = Date.now();
+            const cached = _clientApiCache.get(url);
+            if (cached && (now - cached.time < ttlMs)) {
+                return cached.data;
+            }
+            const res = await fetch(url);
+            const json = await res.json();
+            if (json && json.success) {
+                _clientApiCache.set(url, { data: json, time: now });
+            }
+            return json;
+        }
+
+        function invalidateApiCache() {
+            _clientApiCache.clear();
+        }
 
         function getStoredToken() {
             try {
@@ -598,6 +620,12 @@
             init = init || {};
             init.headers = init.headers || {};
             init.credentials = init.credentials || 'same-origin';
+
+            // Veri değiştiren POST işlemlerinde önbelleği anında temizle
+            const method = (init.method || 'GET').toUpperCase();
+            if (method !== 'GET') {
+                invalidateApiCache();
+            }
 
             const urlStr = typeof resource === 'string' ? resource : (resource.url || '');
             const token = getStoredToken();
@@ -821,9 +849,8 @@
 
         async function updateSidebarBackupStatus() {
             try {
-                const res = await fetch(`${API_BASE}/api/backup/status`);
-                const json = await res.json();
-                if (json.success) {
+                const json = await fetchWithCache(`${API_BASE}/api/backup/status`, 60000);
+                if (json && json.success) {
                     const d = json.data;
                     const isOk = d.integrity_status && d.integrity_status.includes('Sağlam');
                     const badge = document.getElementById('sb-integrity-badge');
@@ -845,9 +872,8 @@
 
         async function loadPersonsCache() {
             try {
-                const res = await fetch(`${API_BASE}/api/persons/simple`);
-                const json = await res.json();
-                if (json.success) {
+                const json = await fetchWithCache(`${API_BASE}/api/persons/simple`, 60000);
+                if (json && json.success) {
                     personsCache = json.data;
                     const options = '<option value="">-- Kişi / Firma Seçiniz --</option>' + 
                         personsCache.map(p => `<option value="${p.id}">${p.name} ${p.phone ? '('+p.phone+')' : ''}</option>`).join('');
@@ -1038,12 +1064,10 @@
 
         // ----------------- 1. DASHBOARD EKRANI -----------------
         async function renderDashboard() {
-            const [dashRes, debtorsRes] = await Promise.all([
-                fetch(`${API_BASE}/api/dashboard`),
-                fetch(`${API_BASE}/api/debtors?status=ACTIVE`)
+            const [dashJson, debtorsJson] = await Promise.all([
+                fetchWithCache(`${API_BASE}/api/dashboard`, 20000),
+                fetchWithCache(`${API_BASE}/api/debtors?status=ACTIVE`, 20000)
             ]);
-            const dashJson = await dashRes.json();
-            const debtorsJson = await debtorsRes.json();
             const d = (dashJson && dashJson.data) ? dashJson.data : { currency_summary: {}, recent_transactions: [], latest_payers: [], contract_stats: {} };
             const activeDebtors = (debtorsJson && debtorsJson.data) ? debtorsJson.data : [];
 
@@ -1395,8 +1419,8 @@
 
         // ----------------- 2. BORÇLU LİSTESİ & ARŞİV -----------------
         async function renderDebtorsList(statusFilter = 'ALL', search = '') {
-            const res = await fetch(`${API_BASE}/api/debtors?status=${statusFilter}&search=${encodeURIComponent(search)}`);
-            const json = await res.json();
+            const cacheKey = `${API_BASE}/api/debtors?status=${statusFilter}&search=${encodeURIComponent(search)}`;
+            const json = search ? await (await fetch(cacheKey)).json() : await fetchWithCache(cacheKey, 20000);
             const debtors = (json && json.data) ? json.data : [];
 
             let rows = '';
@@ -1640,8 +1664,8 @@
 
         // ----------------- 4. DÖVİZ BAĞLANTI İŞLEMLERİ LİSTESİ & DETAY -----------------
         async function renderContractsList(statusFilter = 'ALL', search = '') {
-            const res = await fetch(`${API_BASE}/api/contracts?status=${statusFilter}&search=${encodeURIComponent(search)}`);
-            const json = await res.json();
+            const cacheKey = `${API_BASE}/api/contracts?status=${statusFilter}&search=${encodeURIComponent(search)}`;
+            const json = search ? await (await fetch(cacheKey)).json() : await fetchWithCache(cacheKey, 20000);
             const contracts = (json && json.data) ? json.data : [];
 
             let rows = '';

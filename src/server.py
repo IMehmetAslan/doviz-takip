@@ -11,6 +11,7 @@ Features:
 """
 
 import os
+import time
 import http.server
 import socketserver
 import json
@@ -41,9 +42,39 @@ class DecimalEncoder(json.JSONEncoder):
             return obj.isoformat()
         return super().default(obj)
 
+# ----------------- HIZ VE PERFORMANS HAVUZU (CONNECTION & SESSION CACHE) -----------------
+_cached_db_conn = None
+_session_cache = {}
+
+def get_shared_conn():
+    """Veritabanı soketini sıcak (warm) tutarak her istekte 3 saniyelik SSL el sıkışmasını önler."""
+    global _cached_db_conn
+    if _cached_db_conn is not None:
+        try:
+            cur = _cached_db_conn.cursor()
+            cur.execute("SELECT 1 AS ping;")
+            cur.fetchone()
+            return _cached_db_conn
+        except Exception:
+            try:
+                _cached_db_conn.close()
+            except Exception:
+                pass
+            _cached_db_conn = None
+
+    _cached_db_conn = init_db()
+    return _cached_db_conn
+
 class AppApiHandler(http.server.SimpleHTTPRequestHandler):
     def _get_conn(self):
-        return init_db()
+        return get_shared_conn()
+
+    def _release_conn(self, conn):
+        """Bağlantı soketini kapatmaz, açık tutar; işlem kalıntısını temizler."""
+        try:
+            conn.rollback()
+        except Exception:
+            pass
 
     def _get_token(self):
         # 1. Authorization: Bearer <token>
@@ -69,8 +100,19 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
         token = self._get_token()
         if not token:
             return None
+
+        now = time.time()
+        cached = _session_cache.get(token)
+        if cached and cached["expires"] > now:
+            return cached["user"]
+
         auth = AuthService(conn)
-        return auth.validate_session(token)
+        user = auth.validate_session(token)
+        if user:
+            _session_cache[token] = {"user": user, "expires": now + 180}
+        else:
+            _session_cache.pop(token, None)
+        return user
 
     def _send_json(self, data, status=200, set_cookie=None, clear_cookie=False):
         self.send_response(status)
@@ -272,7 +314,7 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             self._send_json({"success": False, "error": str(e)}, 500)
         finally:
-            conn.close()
+            self._release_conn(conn)
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -291,11 +333,12 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
                 password = data.get("password", "")
                 auth = AuthService(conn)
                 res = auth.login(username, password, ip_address=ip, user_agent=user_agent)
+                _session_cache[res["token"]] = {"user": res["user"], "expires": time.time() + 180}
                 self._send_json({"success": True, "token": res["token"], "data": res, "user": res["user"]}, 200, set_cookie=res["token"])
             except Exception as e:
                 self._send_json({"success": False, "error": str(e)}, 400)
             finally:
-                conn.close()
+                self._release_conn(conn)
             return
 
         # 2. ÇIKIŞ YAPMA
@@ -304,10 +347,11 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
             try:
                 token = self._get_token()
                 if token:
+                    _session_cache.pop(token, None)
                     AuthService(conn).logout(token)
                 self._send_json({"success": True, "message": "Çıkış yapıldı"}, 200, clear_cookie=True)
             finally:
-                conn.close()
+                self._release_conn(conn)
             return
 
         # 3. DİĞER TÜM POST İŞLEMLERİ İÇİN OTURUM DOĞRULAMA
@@ -324,6 +368,7 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
                 old_pwd = data.get("old_password", "")
                 new_pwd = data.get("new_password", "")
                 AuthService(conn).change_password(current_user["user_id"], old_pwd, new_pwd)
+                _session_cache.clear()
                 self._send_json({"success": True, "message": "Şifreniz güncellendi. Lütfen yeni şifrenizle giriş yapınız."}, 200, clear_cookie=True)
 
             elif path == "/api/backup/restore":
@@ -442,7 +487,7 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
             conn.rollback()
             self._send_json({"success": False, "error": str(e)}, 500)
         finally:
-            conn.close()
+            self._release_conn(conn)
 
     def _serve_file(self, filepath, content_type):
         path = Path(filepath)

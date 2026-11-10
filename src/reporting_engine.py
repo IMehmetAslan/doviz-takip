@@ -30,21 +30,7 @@ class ReportingEngine:
         """
         cur = self.conn.cursor()
 
-        # 1. Borç verilen toplam tekil kişi sayısı
-        cur.execute(
-            """
-            SELECT COUNT(DISTINCT l.account_id) as total_debtors
-            FROM transaction_lines l
-            JOIN transactions t ON l.transaction_id = t.id
-            WHERE l.account_id IS NOT NULL 
-              AND l.direction = 'DEBIT' 
-              AND t.status = 'CONFIRMED'
-            """
-        )
-        total_debtors = cur.fetchone()["total_debtors"]
-
-        # Kişi bazında aktif / kapanmış borç sayısı tespiti
-        # Bir kişinin herhangi bir dövizde kalan borcu > 0 ise aktiftir
+        # 1. Kişi bazında aktif / kapanmış borç sayısı ve bakiyeler
         cur.execute(
             """
             SELECT 
@@ -65,6 +51,7 @@ class ReportingEngine:
                 person_balances[acc_id] = {}
             person_balances[acc_id][r["currency_code"]] = to_decimal(r["net_balance"])
 
+        total_debtors = len(person_balances)
         active_debtors_count = 0
         closed_debtors_count = 0
 
