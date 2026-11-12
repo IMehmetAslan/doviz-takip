@@ -427,13 +427,27 @@ class AppApiHandler(http.server.SimpleHTTPRequestHandler):
                 conn.commit()
                 self._send_json({"success": True, "transaction_id": tx_id})
 
-            elif path == "/api/transaction/cancel":
+            elif path == "/api/transaction/cancel" or path == "/api/transaction/delete":
                 create_pre_action_snapshot()
                 tx_id = int(data.get("transaction_id"))
-                reason = data.get("reason", "Kullanıcı tarafından iptal edildi")
-                service.cancel_transaction(tx_id, reason=reason)
+                # Kalıcı silme işlemi (Kullanıcı yanlış girdiğinde silmek istediğinde)
+                service.delete_transaction(tx_id)
                 conn.commit()
-                self._send_json({"success": True, "message": "İşlem iptal edildi"})
+                self._send_json({"success": True, "message": "İşlem başarıyla silindi"})
+
+            elif path == "/api/contract/delete":
+                create_pre_action_snapshot()
+                contract_id = int(data.get("contract_id"))
+                service.delete_contract(contract_id)
+                conn.commit()
+                self._send_json({"success": True, "message": "Döviz bağlantısı başarıyla silindi"})
+
+            elif path == "/api/contract/payment/delete":
+                create_pre_action_snapshot()
+                payment_id = int(data.get("payment_id"))
+                service.delete_contract_payment(payment_id)
+                conn.commit()
+                self._send_json({"success": True, "message": "Bağlantı tahsilatı başarıyla silindi"})
 
             elif path == "/api/contract/create":
                 create_pre_action_snapshot()

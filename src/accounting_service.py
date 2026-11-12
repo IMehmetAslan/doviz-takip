@@ -311,6 +311,52 @@ class AccountingService:
         )
         self.log_audit("CANCEL", "transaction", tx_id, {"reason": reason})
 
+    def delete_transaction(self, tx_id: int) -> None:
+        """
+        Yanlış girilen bir işlemi (alım/satış, borç verme/ödeme alma) kalıcı olarak siler ve bakiyeyi anında düzeltir.
+        Eğer işlem bir sözleşme tahsilatı veya sözleşme satışı ise ilgili sözleşmeyi de günceller.
+        """
+        cur = self.conn.cursor()
+        cur.execute("SELECT * FROM transactions WHERE id = ?", (tx_id,))
+        tx = cur.fetchone()
+        if not tx:
+            raise ValueError("Silinecek işlem bulunamadı.")
+
+        tx_type = tx["tx_type"]
+        ref_no = tx["reference_no"]
+
+        # Eğer sözleşme tahsilatı ise (CONTRACT_PAYMENT):
+        if tx_type == "CONTRACT_PAYMENT":
+            cur.execute("SELECT * FROM fx_contract_payments WHERE transaction_id = ?", (tx_id,))
+            c_pay = cur.fetchone()
+            if c_pay:
+                self.delete_contract_payment(c_pay["id"])
+                return
+
+        # Eğer sözleşme çıkışı ise (CONTRACT_SELL):
+        if tx_type == "CONTRACT_SELL":
+            cur.execute("SELECT id FROM fx_contracts WHERE contract_number = ?", (ref_no,))
+            c_row = cur.fetchone()
+            if c_row:
+                self.delete_contract(c_row["id"])
+                return
+
+        # Normal işlem silme:
+        cur.execute(
+            """
+            DELETE FROM fx_lot_allocations 
+            WHERE transaction_line_id IN (SELECT id FROM transaction_lines WHERE transaction_id = ?)
+            """,
+            (tx_id,)
+        )
+        cur.execute("DELETE FROM transaction_lines WHERE transaction_id = ?", (tx_id,))
+        cur.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
+
+        self.log_audit("DELETE_TRANSACTION", "transaction", tx_id, {
+            "tx_number": tx["tx_number"],
+            "tx_type": tx_type
+        })
+
     # ------------------ DETAY & BAKİYE HESAPLARI ------------------
     def get_person_details(self, person_id: int) -> Optional[Dict[str, Any]]:
         """Kişinin genel bilgilerini, para birimlerine göre borç durumunu ve işlem geçmişini döner."""
@@ -747,4 +793,100 @@ class AccountingService:
             results.append(d)
 
         return results
+
+    def delete_contract(self, contract_id: int) -> None:
+        """
+        Yanlış girilen bir döviz bağlantısını (sözleşmeyi) ve varsa buna ait tüm hareketleri kalıcı olarak siler.
+        Cari borç ve tahsilat hareketlerini temizleyerek bakiyeyi bağlantı öncesi durumuna döndürür.
+        """
+        cur = self.conn.cursor()
+        cur.execute("SELECT * FROM fx_contracts WHERE id = ?", (contract_id,))
+        c = cur.fetchone()
+        if not c:
+            raise ValueError("Silinecek bağlantı kaydı bulunamadı.")
+
+        contract_no = c["contract_number"]
+
+        # 1. Bağlantıya ait tüm tahsilat transactions'larını ve satırlarını temizle
+        cur.execute("SELECT transaction_id FROM fx_contract_payments WHERE contract_id = ? AND transaction_id IS NOT NULL", (contract_id,))
+        payment_tx_ids = [r["transaction_id"] for r in cur.fetchall()]
+        for p_tx_id in payment_tx_ids:
+            cur.execute("DELETE FROM transaction_lines WHERE transaction_id = ?", (p_tx_id,))
+            cur.execute("DELETE FROM transactions WHERE id = ?", (p_tx_id,))
+
+        # 2. fx_contract_payments kayıtlarını temizle
+        cur.execute("DELETE FROM fx_contract_payments WHERE contract_id = ?", (contract_id,))
+
+        # 3. Bağlantının başlangıç çıkış hareketi (CONTRACT_SELL): reference_no veya tx_number = contract_no
+        cur.execute("SELECT id FROM transactions WHERE reference_no = ? OR tx_number = ?", (contract_no, contract_no))
+        sell_tx_rows = cur.fetchall()
+        for s_tx in sell_tx_rows:
+            s_id = s_tx["id"]
+            cur.execute(
+                "DELETE FROM fx_lot_allocations WHERE transaction_line_id IN (SELECT id FROM transaction_lines WHERE transaction_id = ?)",
+                (s_id,)
+            )
+            cur.execute("DELETE FROM transaction_lines WHERE transaction_id = ?", (s_id,))
+            cur.execute("DELETE FROM transactions WHERE id = ?", (s_id,))
+
+        # 4. fx_contracts kaydını sil
+        cur.execute("DELETE FROM fx_contracts WHERE id = ?", (contract_id,))
+
+        self.log_audit("DELETE_CONTRACT", "fx_contract", contract_id, {
+            "contract_number": contract_no
+        })
+
+    def delete_contract_payment(self, payment_id: int) -> None:
+        """
+        Yanlış girilen bir bağlantı tahsilatını (ödemesini) siler ve sözleşmenin kalan bakiyesini eski haline getirir.
+        """
+        cur = self.conn.cursor()
+        cur.execute("SELECT * FROM fx_contract_payments WHERE id = ?", (payment_id,))
+        p = cur.fetchone()
+        if not p:
+            raise ValueError("Silinecek tahsilat kaydı bulunamadı.")
+
+        contract_id = p["contract_id"]
+        tx_id = p["transaction_id"]
+        pay_amt = to_decimal(p["amount"])
+
+        # 1. Transaction ve satırını sil
+        if tx_id:
+            cur.execute("DELETE FROM transaction_lines WHERE transaction_id = ?", (tx_id,))
+            cur.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
+
+        # 2. fx_contract_payments kaydını sil
+        cur.execute("DELETE FROM fx_contract_payments WHERE id = ?", (payment_id,))
+
+        # 3. Sözleşmenin toplam tahsilat ve kalanını yeniden hesapla
+        cur.execute("SELECT * FROM fx_contracts WHERE id = ?", (contract_id,))
+        c = cur.fetchone()
+        if c:
+            target_total = to_decimal(c["total_target_amount"])
+            cur.execute("SELECT SUM(CAST(amount AS NUMERIC)) as total FROM fx_contract_payments WHERE contract_id = ?", (contract_id,))
+            sum_row = cur.fetchone()
+            new_collected = to_decimal(sum_row["total"]) if sum_row and sum_row["total"] is not None else Decimal("0.00")
+            new_remaining = round_money(target_total - new_collected)
+
+            if new_collected <= Decimal("0.00"):
+                new_status = "PENDING"
+            elif new_remaining <= Decimal("0.00"):
+                new_status = "COMPLETED"
+            else:
+                new_status = "PARTIAL"
+
+            cur.execute(
+                """
+                UPDATE fx_contracts
+                SET collected_amount = ?, remaining_amount = ?, status = ?
+                WHERE id = ?
+                """,
+                (str(new_collected), str(new_remaining), new_status, contract_id)
+            )
+
+        self.log_audit("DELETE_CONTRACT_PAYMENT", "fx_contract_payment", payment_id, {
+            "contract_id": contract_id,
+            "amount": str(pay_amt)
+        })
+
 

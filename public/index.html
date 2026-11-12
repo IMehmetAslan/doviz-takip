@@ -1372,6 +1372,11 @@
                         <td class="py-2.5 px-2.5 text-right font-bold whitespace-nowrap ${isDebt ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}">
                             ${isDebt ? '+' : '-'}${parseFloat(tx.amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${tx.currency_code}
                         </td>
+                        <td class="py-2.5 px-2 text-center">
+                            <button onclick="event.stopPropagation(); deleteTransaction(${tx.tx_id})" title="İşlemi Sil" class="p-1.5 text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </td>
                     </tr>
                 `;
             }
@@ -1577,10 +1582,11 @@
                                         <th class="pb-2 px-2.5">Kişi</th>
                                         <th class="pb-2 px-2">Tür</th>
                                         <th class="pb-2 px-2.5 text-right">Tutar</th>
+                                        <th class="pb-2 px-2 text-center">Sil</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${recentHtml || '<tr><td colspan="4" class="py-8 text-center text-slate-400 text-xs">Henüz işlem yapılmadı.</td></tr>'}
+                                    ${recentHtml || '<tr><td colspan="5" class="py-8 text-center text-slate-400 text-xs">Henüz işlem yapılmadı.</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
@@ -1826,8 +1832,8 @@
                             ${h.exchange_rate ? parseFloat(h.exchange_rate).toFixed(2) + ' ₺' : '-'}
                         </td>
                         <td class="py-3 px-3 text-center">
-                            <button onclick="cancelTransaction(${h.tx_id}, ${personId})" title="İşlemi İptal Et" class="text-rose-500 hover:text-rose-700 p-1">
-                                <i class="fa-solid fa-trash-can"></i>
+                            <button onclick="deleteTransaction(${h.tx_id}, ${personId})" title="İşlemi Sil" class="px-2.5 py-1 text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 dark:text-rose-400 font-semibold rounded-lg inline-flex items-center gap-1 transition">
+                                <i class="fa-solid fa-trash-can text-[11px]"></i> Sil
                             </button>
                         </td>
                     </tr>
@@ -1957,14 +1963,17 @@
                         <td class="py-3.5 px-4 text-center">
                             ${statusBadge}
                         </td>
-                        <td class="py-3.5 px-4 text-right space-x-1">
+                        <td class="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
                             ${c.status !== 'COMPLETED' ? `
-                                <button onclick="openAddContractPaymentModal(${c.id}, '${c.person_name.replace(/'/g, "\'")}', '${targetAmt}', '${remaining}', '${c.buy_currency}')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-[11px] transition">
+                                <button onclick="openAddContractPaymentModal(${c.id}, '${c.person_name.replace(/'/g, "\\'")}', '${targetAmt}', '${remaining}', '${c.buy_currency}')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-[11px] transition">
                                     <i class="fa-solid fa-plus mr-1"></i> Ödeme Al
                                 </button>
                             ` : ''}
                             <button onclick="viewContractDetails(${c.id})" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-lg font-semibold text-[11px] transition">
                                 Detay <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                            </button>
+                            <button onclick="deleteContract(${c.id}, '${c.contract_number}')" title="Bağlantıyı Sil" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 dark:text-rose-400 font-semibold rounded-lg text-[11px] transition">
+                                <i class="fa-solid fa-trash-can mr-1"></i> Sil
                             </button>
                         </td>
                     </tr>
@@ -2001,14 +2010,17 @@
                                 <span class="font-bold ${remaining > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}">Kalan: ${remaining.toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${c.buy_currency}</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 pt-1">
+                        <div class="flex items-center gap-2 pt-1 flex-wrap">
                             ${c.status !== 'COMPLETED' ? `
-                                <button onclick="openAddContractPaymentModal(${c.id}, '${c.person_name.replace(/'/g, "\'")}', '${targetAmt}', '${remaining}', '${c.buy_currency}')" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-xs transition text-center flex items-center justify-center gap-1.5 shadow-sm">
+                                <button onclick="openAddContractPaymentModal(${c.id}, '${c.person_name.replace(/'/g, "\\'")}', '${targetAmt}', '${remaining}', '${c.buy_currency}')" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-xs transition text-center flex items-center justify-center gap-1.5 shadow-sm">
                                     <i class="fa-solid fa-plus text-[10px]"></i> Ödeme Al
                                 </button>
                             ` : ''}
                             <button onclick="viewContractDetails(${c.id})" class="flex-1 py-2 px-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-xl font-semibold text-xs transition text-center">
                                 Detay Gör <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                            </button>
+                            <button onclick="deleteContract(${c.id}, '${c.contract_number}')" class="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 dark:text-rose-400 rounded-xl font-semibold text-xs transition text-center flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-trash-can text-[10px]"></i> Sil
                             </button>
                         </div>
                     </div>
@@ -2105,6 +2117,11 @@
                         <td class="py-2.5 px-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
                             +${parseFloat(p.amount).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${p.currency_code}
                         </td>
+                        <td class="py-2.5 px-3 text-center">
+                            <button onclick="deleteContractPayment(${p.id}, ${contractId})" title="Bu Tahsilatı Sil" class="px-2 py-1 text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 dark:text-rose-400 font-semibold rounded-lg inline-flex items-center gap-1 transition">
+                                <i class="fa-solid fa-trash-can text-[10px]"></i> Sil
+                            </button>
+                        </td>
                     </tr>
                 `;
             }
@@ -2132,6 +2149,9 @@
                             ` : ''}
                             <button onclick="viewPersonDetails(${c.account_id})" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs flex items-center gap-2 transition">
                                 <i class="fa-solid fa-user"></i> Kişi Detayına Git
+                            </button>
+                            <button onclick="deleteContract(${c.id}, '${c.contract_number}', true)" class="px-4 py-2 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 font-semibold rounded-xl text-xs flex items-center gap-2 transition">
+                                <i class="fa-solid fa-trash-can"></i> Bağlantıyı Sil
                             </button>
                         </div>
                     </div>
@@ -2190,10 +2210,11 @@
                                         <th class="py-2.5 px-3">Açıklama</th>
                                         <th class="py-2.5 px-3">İşlem Fiş No</th>
                                         <th class="py-2.5 px-3 text-right">Tahsil Edilen Tutar</th>
+                                        <th class="py-2.5 px-3 text-center">Sil</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${paymentsRows || '<tr><td colspan="4" class="p-8 text-center text-slate-400 text-xs">Henüz bir ödeme tahsil edilmedi.</td></tr>'}
+                                    ${paymentsRows || '<tr><td colspan="5" class="p-8 text-center text-slate-400 text-xs">Henüz bir ödeme tahsil edilmedi.</td></tr>'}
                                 </tbody>
                             </table>
                         </div>
@@ -2529,20 +2550,74 @@
             }
         }
 
+        async function deleteTransaction(txId, personId) {
+            if (!confirm('Bu işlemi kalıcı olarak silmek istediğinize emin misiniz?\n\nYanlış girilen bu işlem silinecek ve ilgili kişinin borç/alacak bakiyesi otomatik olarak düzeltilecektir.')) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/transaction/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transaction_id: txId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('İşlem başarıyla silindi ve bakiye güncellendi.', 'success');
+                    updateSidebarBackupStatus();
+                    if (personId) {
+                        viewPersonDetails(personId);
+                    } else {
+                        renderDashboard();
+                    }
+                } else {
+                    showToast('Silme hatası: ' + (data.error || 'İşlem silinemedi'), 'error');
+                }
+            } catch (err) {
+                showToast('Bağlantı hatası: ' + err.message, 'error');
+            }
+        }
+
         async function cancelTransaction(txId, personId) {
-            if (!confirm('Bu işlemi iptal etmek istediğinize emin misiniz? Bakiye otomatik güncellenecektir.')) return;
-            const res = await fetch(`${API_BASE}/api/transaction/cancel`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ transaction_id: txId, reason: 'Kullanıcı onayıyla iptal edildi' })
-            });
-            const data = await res.json();
-            if (data.success) {
-                showToast('İşlem başarıyla iptal edildi.', 'success');
-                updateSidebarBackupStatus();
-                viewPersonDetails(personId);
-            } else {
-                showToast('İptal hatası: ' + data.error, 'error');
+            return deleteTransaction(txId, personId);
+        }
+
+        async function deleteContract(contractId, contractNo, returnToList = false) {
+            if (!confirm(`[${contractNo}] numaralı döviz bağlantısını silmek istediğinize emin misiniz?\n\nBu işlem döviz çıkışını ve varsa bu bağlantıya ait tüm tahsilatları kalıcı olarak temizleyecek, cari bakiyeleri eski haline getirecektir.`)) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/contract/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contract_id: contractId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Döviz bağlantısı ve hareketleri başarıyla silindi.', 'success');
+                    updateSidebarBackupStatus();
+                    navigate('contracts');
+                } else {
+                    showToast('Silme hatası: ' + (data.error || 'Bağlantı silinemedi'), 'error');
+                }
+            } catch (err) {
+                showToast('Bağlantı hatası: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteContractPayment(paymentId, contractId) {
+            if (!confirm('Bu tahsilat kaydını silmek istediğinize emin misiniz?\n\nSözleşmenin kalan tahsilat tutarı ve cari hesap bakiyesi eski haline dönecektir.')) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/contract/payment/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ payment_id: paymentId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Tahsilat kaydı başarıyla silindi.', 'success');
+                    updateSidebarBackupStatus();
+                    viewContractDetails(contractId);
+                } else {
+                    showToast('Silme hatası: ' + (data.error || 'Tahsilat silinemedi'), 'error');
+                }
+            } catch (err) {
+                showToast('Bağlantı hatası: ' + err.message, 'error');
             }
         }
 

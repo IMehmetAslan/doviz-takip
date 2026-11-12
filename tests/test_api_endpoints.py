@@ -237,7 +237,29 @@ class TestApiEndpoints(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertTrue(backup_stat.get("success"))
 
-        # 12. Oturumu kapat
+        # 12. Döviz bağlantısı tahsilatını sil
+        payment_id = c_pay.get("payment_id")
+        status, del_pay = self.request("POST", "/api/contract/payment/delete", {
+            "payment_id": payment_id
+        }, token=token)
+        self.assertEqual(status, 200)
+        self.assertTrue(del_pay.get("success"))
+
+        # 13. Döviz bağlantısını tamamen sil
+        status, del_contract = self.request("POST", "/api/contract/delete", {
+            "contract_id": contract_id
+        }, token=token)
+        self.assertEqual(status, 200)
+        self.assertTrue(del_contract.get("success"))
+
+        # 14. Yanlış girilen borç verme işlemini kalıcı olarak sil
+        status, del_tx = self.request("POST", "/api/transaction/delete", {
+            "transaction_id": tx_debt_id
+        }, token=token)
+        self.assertEqual(status, 200)
+        self.assertTrue(del_tx.get("success"))
+
+        # 15. Oturumu kapat
         status, logout_data = self.request("POST", "/api/auth/logout", token=token)
         self.assertEqual(status, 200)
         self.assertTrue(logout_data.get("success"))
